@@ -25,7 +25,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .brand p{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:7px;}
 .input-wrap{position:relative;display:flex;align-items:center;}
 .input-wrap svg{position:absolute;left:13px;color:var(--muted);pointer-events:none;}
-.input-wrap input{width:100%;background:var(--surface2);border:.5px solid var(--border2);border-radius:var(--radius);padding:11px 13px 11px 38px;font-family:var(--sans);font-size:16px;color:var(--text);outline:none;transition:border-color .2s;touch-action:manipulation;}
+.input-wrap input{width:100%;background:var(--surface2);border:.5px solid var(--border2);border-radius:var(--radius);padding:11px 13px 11px 38px;font-family:var(--sans);font-size:13px;color:var(--text);outline:none;transition:border-color .2s;}
 .input-wrap input::placeholder{color:var(--muted);}
 .input-wrap input:focus{border-color:var(--accent);}
 .radius-control{display:flex;flex-direction:column;gap:8px;}
@@ -40,7 +40,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .radius-custom-wrap{display:none;flex-direction:column;gap:6px;}
 .radius-custom-wrap.show{display:flex;}
 .radius-custom-input-row{display:flex;gap:8px;align-items:center;}
-.radius-custom-input-row input{flex:1;background:var(--surface2);border:.5px solid var(--border2);border-radius:6px;padding:9px 12px;font-family:var(--mono);font-size:16px;color:var(--text);outline:none;transition:border-color .2s;touch-action:manipulation;}
+.radius-custom-input-row input{flex:1;background:var(--surface2);border:.5px solid var(--border2);border-radius:6px;padding:9px 12px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none;transition:border-color .2s;}
 .radius-custom-input-row input:focus{border-color:var(--accent);}
 .radius-custom-input-row span{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;}
 .radius-warning{display:none;font-family:var(--mono);font-size:10px;color:var(--accent);padding:7px 10px;background:var(--accent-bg);border:.5px solid rgba(200,169,110,.2);border-radius:6px;line-height:1.5;}
@@ -225,20 +225,21 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
     transform:translateY(calc(var(--sheet-full) - var(--sheet-peek)));
   }
 
-  /* Drag handle */
-  .sheet-handle{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:10px 0 6px;
-    cursor:grab;
-    flex-shrink:0;
-  }
-  .sheet-handle-bar{
-    width:36px; height:4px;
-    background:rgba(255,255,255,0.25);
-    border-radius:2px;
-  }
+  /* Drag handle — iOS pill style */
+    .sheet-handle{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:8px 0 4px;
+      cursor:grab;
+      flex-shrink:0;
+      touch-action:none;
+    }
+    .sheet-handle-bar{
+      width:32px; height:4px;
+      background:rgba(255,255,255,0.28);
+      border-radius:2px;
+    }
 
   /* Compact sidebar top on mobile */
   .sidebar-top{padding:10px 16px 10px;}
@@ -285,10 +286,23 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
   .toggle-thumb{width:14px;height:14px;}
   .toggle input:checked~.toggle-thumb{transform:translateX(16px);}
   .toggle-track{border-radius:10px;}
+  
+  /* 16px prevents iOS auto-zoom, visually compensated by container */
+  .input-wrap input{ font-size:16px; }
+  .radius-custom-input-row input{ font-size:16px; }
+  /* Give radius pills room to breathe */
+  .radius-pills{ padding-top:2px; }
+  .presets-bar{ padding-top:10px; }
+  
+  .mobile-scroll-actions{
+      padding:12px 16px calc(env(safe-area-inset-bottom,0px)+16px);
+      border-top:.5px solid var(--border);
+    }
 }
 
 /* Hide handle on desktop */
 .sheet-handle{display:none;}
+.mobile-scroll-actions{ display:none; }
 
 </style>
 </head>
@@ -369,6 +383,18 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
       <div class="section collapsed" id="sec-natural">
         <div class="section-header" onclick="toggleSection('sec-natural')"><span class="section-label">Natural</span><span class="section-caret">▾</span></div>
         <div class="section-body" id="natural-layers"></div>
+          <div class="mobile-scroll-actions">
+            <div class="sidebar-bottom-row">
+              <button class="copy-btn" id="copy-btn-scroll" disabled>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy SVG
+              </button>
+              <button class="export-btn" id="export-btn-scroll" disabled>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+              </button>
+            </div>
+          </div>
       </div>
     </div>
     <div class="sidebar-bottom">
@@ -512,14 +538,13 @@ function minZoom(){return viewMode==='fit'?fitZoom():fillZoom();}
 // At the min zoom, the map may be larger than the canvas in one axis —
 // allow panning the excess. At zoom above min, both axes may have excess.
 function sheetOffset(){
-  // On mobile, shift the visual center upward by half the resting sheet height
-  // so the map centers in the visible area above the sheet
+  // Visual offset so map centers in visible area above sheet on mobile
   if(!isMobile()) return 0;
-  const sheetMidVh = parseFloat(
+  const sheetMidVh=parseFloat(
     getComputedStyle(document.documentElement)
       .getPropertyValue('--sheet-mid')
-  ) / 100 * window.innerHeight;
-  return sheetMidVh / 2;
+  )/100*window.innerHeight;
+  return sheetMidVh/2;
 }
 
 function clampPan(){
@@ -527,7 +552,8 @@ function clampPan(){
   const side=svgEl().offsetWidth||r.width;
   const rendered=side*zoom;
   const maxX=Math.max(0,(rendered-r.width)/2);
-  const maxY=Math.max(0,(rendered-r.height)/2);
+  // Vertical: account for sheet offset so you can pan to map edges
+  const maxY=Math.max(sheetOffset(),(rendered-r.height)/2+sheetOffset());
   panX=Math.max(-maxX,Math.min(maxX,panX));
   panY=Math.max(-maxY,Math.min(maxY,panY));
 }
@@ -542,19 +568,16 @@ function applyTransform(animated=false){
   } else {
     el.style.transition='';
   }
-  // On mobile shift map up so it centers in visible area above the sheet
-  const offsetY = -sheetOffset();
-  el.style.transform=`translate(${panX}px,${panY+offsetY}px) scale(${zoom})`;
+  el.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;
 }
 
-// Switch view mode — snaps zoom to the mode's floor, animates
-function setMode(mode, animated=true){
+function setMode(mode,animated=true){
   viewMode=mode;
-  zoom=minZoom();
-  panX=0; panY=0;
+  if(mode==='fit'){zoom=fitZoom();panX=0;panY=-sheetOffset();}
+  if(mode==='fill'){zoom=fillZoom();panX=0;panY=-sheetOffset();}
   applyTransform(animated);
-  document.getElementById('zc-fit').classList.toggle('active', mode==='fit');
-  document.getElementById('zc-fill').classList.toggle('active', mode==='fill');
+  document.getElementById('zc-fit').classList.toggle('active',mode==='fit');
+  document.getElementById('zc-fill').classList.toggle('active',mode==='fill');
 }
 
 document.getElementById('zc-fit').addEventListener('click', ()=>setMode('fit'));
@@ -885,6 +908,7 @@ function resetGenerateBtn(){generateBtn.disabled=false;generateBtn.innerHTML=`<s
 
 async function generate(){
   const query=document.getElementById('city-input').value.trim();if(!query)return;
+  document.activeElement?.blur(); // dismiss mobile keyboard
   generateBtn.disabled=true;
   generateBtn.innerHTML=`<div style="width:13px;height:13px;border:1.5px solid rgba(26,20,0,0.25);border-top-color:#1a1400;border-radius:50%;animation:spin .8s linear infinite"></div>Searching…`;
   welcomeErr.classList.remove('show');
@@ -961,124 +985,146 @@ document.getElementById('copy-btn').addEventListener('click',()=>{
   const svgStr=`<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BASE} ${BASE}"><rect width="${BASE}" height="${BASE}" fill="${S.bgColor}"/>${content}</svg>`;
   navigator.clipboard.writeText(svgStr).then(()=>toast('SVG copied to clipboard')).catch(()=>toast('Copy failed — try Export instead',true));
 });
+    
+// Mirror scroll-area buttons on mobile
+document.getElementById('copy-btn-scroll')?.addEventListener('click',()=>{
+  document.getElementById('copy-btn').click();
+});
+document.getElementById('export-btn-scroll')?.addEventListener('click',()=>{
+  document.getElementById('export-btn').click();
+});
+// Keep disabled state in sync
+const _expBtn=document.getElementById('export-btn');
+const _copyBtn=document.getElementById('copy-btn');
+const _expScroll=document.getElementById('export-btn-scroll');
+const _copyScroll=document.getElementById('copy-btn-scroll');
+new MutationObserver(()=>{
+  if(_expScroll) _expScroll.disabled=_expBtn.disabled;
+  if(_copyScroll) _copyScroll.disabled=_copyBtn.disabled;
+}).observe(_expBtn,{attributes:true,attributeFilter:['disabled']});
+new MutationObserver(()=>{
+  if(_copyScroll) _copyScroll.disabled=_copyBtn.disabled;
+}).observe(_copyBtn,{attributes:true,attributeFilter:['disabled']});
+
 // ── Mobile bottom sheet ───────────────────────────────────────
 function isMobile(){ return window.innerWidth <= 768; }
 
 (function initSheet(){
-  const sheet   = document.getElementById('sidebar');
-  const handle  = document.getElementById('sheet-handle');
-  if(!sheet || !handle) return;
+  const sheet  = document.getElementById('sidebar');
+  const handle = document.getElementById('sheet-handle');
+  const sTop   = document.querySelector('.sidebar-top');
+  if(!sheet||!handle) return;
 
-  let startY=0, startTranslate=0, isDragging=false;
+  let currentTranslate=0, startY=0, startTranslate=0;
+  let isDragging=false, lastY=0, lastT=0, velocity=0;
 
-  // Current translate in px (positive = more hidden)
-  let currentTranslate = 0;
-
+  function vh(){ return window.innerHeight; }
   function getFullH(){ return sheet.offsetHeight; }
-  function getMidTranslate(){ return getFullH() - parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-mid').replace('vh','')) / 100 * window.innerHeight; }
-  function getPeekTranslate(){ return getFullH() - parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-peek').replace('px','')); }
-
-  function snapTo(translateY, animated=true){
-    currentTranslate = translateY;
-    sheet.style.transition = animated ? 'transform .3s cubic-bezier(.25,.46,.45,.94)' : 'none';
-    sheet.style.transform  = `translateY(${translateY}px)`;
+  function getMidT(){
+    const midVh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-mid'))/100;
+    return getFullH()-midVh*vh();
+  }
+  function getPeekT(){
+    const peek=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-peek'));
+    return getFullH()-peek;
   }
 
-  function snapToNearest(velocity=0){
-    const mid  = getMidTranslate();
-    const peek = getPeekTranslate();
-    const full = 0; // fully open = no translation
-
-    // Decide snap target based on position + velocity
-    if(velocity < -0.5){
-      // Flicked up — go to full
-      snapTo(full);
-    } else if(velocity > 0.5){
-      // Flicked down
-      currentTranslate > mid ? snapTo(peek) : snapTo(mid);
-    } else {
-      // No strong velocity — snap to nearest
-      const dFull = Math.abs(currentTranslate - full);
-      const dMid  = Math.abs(currentTranslate - mid);
-      const dPeek = Math.abs(currentTranslate - peek);
-      const min   = Math.min(dFull, dMid, dPeek);
-      if(min === dFull)      snapTo(full);
-      else if(min === dMid)  snapTo(mid);
-      else                   snapTo(peek);
+  function snapTo(t,animated=true){
+    currentTranslate=Math.max(0,Math.min(getPeekT(),t));
+    sheet.style.transition=animated?'transform .3s cubic-bezier(.25,.46,.45,.94)':'none';
+    sheet.style.transform=`translateY(${currentTranslate}px)`;
+    // Fade zoom controls when sheet fully open
+    const zc=document.getElementById('zoom-controls');
+    if(zc){
+      const isFullOpen=currentTranslate<10;
+      zc.style.transition='opacity .25s';
+      zc.style.opacity=isFullOpen?'0':'1';
+      zc.style.pointerEvents=isFullOpen?'none':'auto';
     }
   }
 
-  function onPointerDown(e){
-    if(!isMobile()) return;
-    isDragging=true;
-    startY = e.touches ? e.touches[0].clientY : e.clientY;
-    startTranslate = currentTranslate;
-    sheet.style.transition='none';
-    e.stopPropagation();
+  function snapNearest(vel=0){
+    const mid=getMidT(), peek=getPeekT(), full=0;
+    let target;
+    if(vel<-0.4) target=full;
+    else if(vel>0.4) target=currentTranslate>mid?peek:mid;
+    else{
+      const dF=Math.abs(currentTranslate-full);
+      const dM=Math.abs(currentTranslate-mid);
+      const dP=Math.abs(currentTranslate-peek);
+      target=[full,mid,peek][[dF,dM,dP].indexOf(Math.min(dF,dM,dP))];
+    }
+    snapTo(target);
   }
 
-  let lastY=0, lastT=0, velocity=0;
+  // Only drag from handle or sidebar-top
+  function startDrag(clientY){
+    isDragging=true;
+    startY=clientY; startTranslate=currentTranslate;
+    lastY=clientY; lastT=Date.now(); velocity=0;
+    sheet.style.transition='none';
+  }
 
-  function onPointerMove(e){
-    if(!isDragging) return;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const delta = y - startY;
-    const now = Date.now();
-    velocity = (y - lastY) / (now - lastT || 1);
+  handle.addEventListener('touchstart',e=>{
+    if(!isMobile())return;
+    startDrag(e.touches[0].clientY);
+  },{passive:true});
+
+  sTop?.addEventListener('touchstart',e=>{
+    if(!isMobile())return;
+    startDrag(e.touches[0].clientY);
+  },{passive:true});
+
+  // touchmove only on handle/sTop — don't block scroll elsewhere
+  function onDragMove(e){
+    if(!isDragging)return;
+    const y=e.touches[0].clientY;
+    const now=Date.now();
+    velocity=(y-lastY)/(now-lastT||1);
     lastY=y; lastT=now;
-    const newT = Math.max(0, Math.min(getPeekTranslate(), startTranslate + delta));
-    currentTranslate = newT;
-    sheet.style.transform = `translateY(${newT}px)`;
+    const t=Math.max(0,Math.min(getPeekT(),startTranslate+(y-startY)));
+    currentTranslate=t;
+    sheet.style.transform=`translateY(${t}px)`;
     e.preventDefault();
   }
 
-  function onPointerUp(){
-    if(!isDragging) return;
+  handle.addEventListener('touchmove',onDragMove,{passive:false});
+  sTop?.addEventListener('touchmove',onDragMove,{passive:false});
+
+  window.addEventListener('touchend',()=>{
+    if(!isDragging)return;
     isDragging=false;
-    snapToNearest(velocity);
-  }
-
-  // Attach to handle for drag
-  handle.addEventListener('touchstart', onPointerDown, {passive:true});
-  window.addEventListener('touchmove',  onPointerMove, {passive:false});
-  window.addEventListener('touchend',   onPointerUp);
-
-  // Also allow dragging from the sidebar-top on mobile
-  document.querySelector('.sidebar-top')?.addEventListener('touchstart', onPointerDown, {passive:true});
-
-  // Tap handle to toggle between mid and peek
-  handle.addEventListener('click', ()=>{
-    if(!isMobile()) return;
-    const mid  = getMidTranslate();
-    const peek = getPeekTranslate();
-    snapTo(currentTranslate <= mid + 10 ? peek : mid);
+    snapNearest(velocity);
   });
 
-  // Init position on mobile
+  // Tap handle to cycle peek→mid→full
+  handle.addEventListener('click',()=>{
+    if(!isMobile())return;
+    const mid=getMidT(), peek=getPeekT();
+    if(currentTranslate>=peek-10) snapTo(mid);
+    else if(currentTranslate>=mid-10) snapTo(0);
+    else snapTo(mid);
+  });
+
   function initPosition(){
-    if(!isMobile()) return;
-    currentTranslate = getMidTranslate();
-    snapTo(currentTranslate, false);
+    if(!isMobile()){sheet.style.transform='';return;}
+    snapTo(getMidT(),false);
   }
 
-  // Reset when returning to welcome / new map
-  const origNewBtn = document.getElementById('new-btn').onclick;
-  document.getElementById('new-btn').addEventListener('click', ()=>{
-    if(isMobile()) setTimeout(initPosition, 500);
-  });
-
-  // After map loads, settle to mid position
-  const origFetch = window.fetchAndRender;
-  // We hook into the overlay hide as the signal
-  const origHideOverlay = window.hideOverlay;
-  window.hideOverlay = function(){
-    origHideOverlay?.();
-    if(isMobile()) setTimeout(initPosition, 100);
+  // Hook into hideOverlay to set position after map loads
+  const _hideOverlay=window.hideOverlay;
+  window.hideOverlay=function(){
+    _hideOverlay?.();
+    if(isMobile()) setTimeout(initPosition,100);
   };
 
-  window.addEventListener('resize', ()=>{
+  document.getElementById('new-btn').addEventListener('click',()=>{
+    if(isMobile()) setTimeout(initPosition,500);
+  });
+
+  window.addEventListener('resize',()=>{
     if(isMobile()) initPosition();
-    else { sheet.style.transform=''; sheet.style.transition=''; }
+    else{ sheet.style.transform=''; }
   });
 
   initPosition();
