@@ -2,7 +2,7 @@
 
 Generate clean, customizable map visuals from OpenStreetMap data.
 
-<img width="2000" height="500" alt="GitHub-Banner" src="https://github.com/user-attachments/assets/960e2482-5d7e-4e67-ba55-b3795ca1b875" />
+<img width="2000" height="500" alt="GitHub-Banner" src="https://github.com/user-attachments/assets/2915eb68-3cae-4ab0-bb5a-879bf635c7d9" />
 
 ## Overview
 Meridian is a lightweight, client-side web app that creates stylized map graphics from real-world locations. Simply enter a place, adjust the radius, and generate a clean, printable map instantly.
