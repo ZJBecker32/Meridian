@@ -182,7 +182,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 .modal-confirm:hover{opacity:.88;}
 
 /* ── Mobile layout ───────────────────────────────────────────── */
-@media(max-width:768px){
+@media(max-width:640px){
 
   /* Welcome card goes full width */
   .welcome-card{
@@ -243,7 +243,6 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 
   /* Compact sidebar top on mobile */
   .sidebar-top{padding:10px 16px 10px;}
-  .sidebar-brand h2{font-size:15px;}
 
   /* Presets bar more compact */
   .presets-bar{padding:8px 16px;}
@@ -1007,7 +1006,7 @@ new MutationObserver(()=>{
 }).observe(_copyBtn,{attributes:true,attributeFilter:['disabled']});
 
 // ── Mobile bottom sheet ───────────────────────────────────────
-function isMobile(){ return window.innerWidth <= 768; }
+function isMobile(){ return window.innerWidth <= 640; }
 
 (function initSheet(){
   const sheet  = document.getElementById('sidebar');
