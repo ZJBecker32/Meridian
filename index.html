@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>Meridian</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;1,300&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .brand p{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:7px;}
 .input-wrap{position:relative;display:flex;align-items:center;}
 .input-wrap svg{position:absolute;left:13px;color:var(--muted);pointer-events:none;}
-.input-wrap input{width:100%;background:var(--surface2);border:.5px solid var(--border2);border-radius:var(--radius);padding:11px 13px 11px 38px;font-family:var(--sans);font-size:13px;color:var(--text);outline:none;transition:border-color .2s;}
+.input-wrap input{width:100%;background:var(--surface2);border:.5px solid var(--border2);border-radius:var(--radius);padding:11px 13px 11px 38px;font-family:var(--sans);font-size:16px;color:var(--text);outline:none;transition:border-color .2s;touch-action:manipulation;}
 .input-wrap input::placeholder{color:var(--muted);}
 .input-wrap input:focus{border-color:var(--accent);}
 .radius-control{display:flex;flex-direction:column;gap:8px;}
@@ -40,7 +40,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .radius-custom-wrap{display:none;flex-direction:column;gap:6px;}
 .radius-custom-wrap.show{display:flex;}
 .radius-custom-input-row{display:flex;gap:8px;align-items:center;}
-.radius-custom-input-row input{flex:1;background:var(--surface2);border:.5px solid var(--border2);border-radius:6px;padding:9px 12px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .2s;}
+.radius-custom-input-row input{flex:1;background:var(--surface2);border:.5px solid var(--border2);border-radius:6px;padding:9px 12px;font-family:var(--mono);font-size:16px;color:var(--text);outline:none;transition:border-color .2s;touch-action:manipulation;}
 .radius-custom-input-row input:focus{border-color:var(--accent);}
 .radius-custom-input-row span{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;}
 .radius-warning{display:none;font-family:var(--mono);font-size:10px;color:var(--accent);padding:7px 10px;background:var(--accent-bg);border:.5px solid rgba(200,169,110,.2);border-radius:6px;line-height:1.5;}
@@ -114,7 +114,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 .weight-num{width:36px;background:none;border:none;border-bottom:.5px solid var(--border2);border-radius:0;padding:1px 2px;font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;outline:none;transition:border-color .15s,color .15s;-moz-appearance:textfield;}
 .weight-num::-webkit-inner-spin-button,.weight-num::-webkit-outer-spin-button{-webkit-appearance:none;}
 .weight-num:focus{border-color:var(--accent);color:var(--text);}
-.sidebar-bottom{padding:12px 18px;border-top:.5px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:7px;}
+.sidebar-bottom{padding:10px 18px;border-top:.5px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:7px;}
+.sidebar-bottom-row{display:flex;gap:7px;}
+.sidebar-bottom-row .copy-btn{flex:1;}
+.sidebar-bottom-row .export-btn{flex:1;}
 .export-btn{background:var(--accent);color:#1a1400;border:none;border-radius:var(--radius);padding:11px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:7px;}
 .export-btn:hover{opacity:.88;}
 .export-btn:disabled{opacity:.3;cursor:not-allowed;}
@@ -123,7 +126,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 .copy-btn:disabled{opacity:.3;cursor:not-allowed;}
 
 /* Canvas */
-#canvas-area{flex:1;position:relative;overflow:hidden;background:#0c0c0d;user-select:none;cursor:grab;}
+#canvas-area{flex:1;position:relative;overflow:hidden;background:#0c0c0d;user-select:none;cursor:grab;touch-action:none;}
 #canvas-area.panning{cursor:grabbing;}
 #pan-layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform-origin:center center;}
 #map-svg{display:block;flex-shrink:0;}
@@ -233,7 +236,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
   }
   .sheet-handle-bar{
     width:36px; height:4px;
-    background:var(--border2);
+    background:rgba(255,255,255,0.25);
     border-radius:2px;
   }
 
@@ -256,7 +259,9 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
   }
 
   /* Bottom bar for export/copy */
-  .sidebar-bottom{padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);}
+  .sidebar-bottom{padding:6px 16px calc(env(safe-area-inset-bottom,0px) + 8px);}
+    /* Collapse last section's bottom padding */
+    .sidebar-scroll .section:last-child{border-bottom:none;}
 
   /* Zoom controls — top right on mobile */
   #zoom-controls{
@@ -367,14 +372,16 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
       </div>
     </div>
     <div class="sidebar-bottom">
-      <button class="export-btn" id="export-btn" disabled>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Export
-      </button>
-      <button class="copy-btn" id="copy-btn" disabled>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Copy SVG
-      </button>
+        <div class="sidebar-bottom-row">
+            <button class="copy-btn" id="copy-btn" disabled>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy SVG
+            </button>
+            <button class="export-btn" id="export-btn" disabled>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export
+            </button>
+        </div>
     </div>
   </div>
 
@@ -485,12 +492,18 @@ function svgSide(){return svgEl().offsetWidth||600;}
 
 // Zoom at which SVG height fills canvas height exactly (some gray on sides for wide canvases)
 function fitZoom(){
-  const r = canvasRect();
-  return r.height / r.width; // at this zoom, SVG height = canvas height
+  const r=canvasRect();
+  const side = r.width > r.height ? r.width : r.height;
+  // Fit: zoom so the smaller canvas dimension is filled
+  const smaller = Math.min(r.width, r.height);
+  return smaller / side;
 }
-// Zoom at which SVG width fills canvas width exactly (map fills edge-to-edge)
 function fillZoom(){
-  return 1.0; // SVG side = canvas width, so zoom=1 fills width exactly
+  const r=canvasRect();
+  const side = r.width > r.height ? r.width : r.height;
+  // Fill: zoom so the larger canvas dimension is covered
+  const larger = Math.max(r.width, r.height);
+  return larger / side;
 }
 // Min zoom for current mode
 function minZoom(){return viewMode==='fit'?fitZoom():fillZoom();}
@@ -498,17 +511,28 @@ function minZoom(){return viewMode==='fit'?fitZoom():fillZoom();}
 // Clamp pan so the map edge never goes past the canvas edge.
 // At the min zoom, the map may be larger than the canvas in one axis —
 // allow panning the excess. At zoom above min, both axes may have excess.
+function sheetOffset(){
+  // On mobile, shift the visual center upward by half the resting sheet height
+  // so the map centers in the visible area above the sheet
+  if(!isMobile()) return 0;
+  const sheetMidVh = parseFloat(
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--sheet-mid')
+  ) / 100 * window.innerHeight;
+  return sheetMidVh / 2;
+}
+
 function clampPan(){
-  const r = canvasRect();
-  const rendered = r.width * zoom; // SVG side in pixels at current zoom
-  const maxX = Math.max(0, (rendered - r.width)  / 2);
-  const maxY = Math.max(0, (rendered - r.height) / 2);
-  panX = Math.max(-maxX, Math.min(maxX, panX));
-  panY = Math.max(-maxY, Math.min(maxY, panY));
+  const r=canvasRect();
+  const side=svgEl().offsetWidth||r.width;
+  const rendered=side*zoom;
+  const maxX=Math.max(0,(rendered-r.width)/2);
+  const maxY=Math.max(0,(rendered-r.height)/2);
+  panX=Math.max(-maxX,Math.min(maxX,panX));
+  panY=Math.max(-maxY,Math.min(maxY,panY));
 }
 
 function applyTransform(animated=false){
-  // Never go below the current mode's floor
   zoom=Math.max(zoom,minZoom());
   clampPan();
   const el=document.getElementById('pan-layer');
@@ -518,7 +542,9 @@ function applyTransform(animated=false){
   } else {
     el.style.transition='';
   }
-  el.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;
+  // On mobile shift map up so it centers in visible area above the sheet
+  const offsetY = -sheetOffset();
+  el.style.transform=`translate(${panX}px,${panY+offsetY}px) scale(${zoom})`;
 }
 
 // Switch view mode — snaps zoom to the mode's floor, animates
@@ -712,9 +738,12 @@ function nodeIdsToFill(ids,nm){const ns=ids.map(id=>nm[id]).filter(Boolean);if(n
 // fit zoom  = canvasH / svgSide  → SVG height fills canvas height
 // fill zoom = canvasW / svgSide  → SVG width fills canvas width
 function sizeMapSVG(){
-  const r = canvasRect();
-  svgEl().style.width  = r.width + 'px';
-  svgEl().style.height = r.width + 'px';
+  const r=canvasRect();
+  // On portrait (mobile): SVG side = canvas height so fit=zoom1, fill covers width
+  // On landscape (desktop): SVG side = canvas width so fill=zoom1, fit shows full map
+  const side = r.width > r.height ? r.width : r.height;
+  svgEl().style.width  = side + 'px';
+  svgEl().style.height = side + 'px';
 }
 
 // ── Build SVG content ─────────────────────────────────────────────
