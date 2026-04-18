@@ -53,6 +53,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .btn-primary:disabled{opacity:.38;cursor:not-allowed;}
 .welcome-footer{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:.04em;}
 
+/* ── Mobile bottom sheet variables ───────────────────────────── */
+:root{
+  --sheet-peek:64px;       /* handle + presets visible when collapsed */
+  --sheet-mid:42vh;        /* default resting height */
+  --sheet-full:88vh;       /* swiped fully open */
+}
+
 #app{display:flex;width:100%;height:100%;opacity:0;transition:opacity .45s;}
 #app.visible{opacity:1;}
 
@@ -170,6 +177,114 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 .modal-cancel:hover{border-color:var(--text);color:var(--text);}
 .modal-confirm{flex:2;background:var(--accent);border:none;border-radius:var(--radius);padding:10px;font-family:var(--sans);font-size:13px;font-weight:500;color:#1a1400;cursor:pointer;transition:opacity .15s;}
 .modal-confirm:hover{opacity:.88;}
+
+/* ── Mobile layout ───────────────────────────────────────────── */
+@media(max-width:768px){
+
+  /* Welcome card goes full width */
+  .welcome-card{
+    width:calc(100% - 32px);
+    max-width:420px;
+    padding:28px 24px;
+  }
+
+  /* App flips to column — canvas on top, sheet on bottom */
+  #app{flex-direction:column;}
+
+  /* Canvas fills everything, sheet overlays it */
+  #canvas-area{
+    position:fixed;
+    inset:0;
+    height:100%;
+    width:100%;
+  }
+
+  /* Sidebar becomes a bottom sheet */
+  #sidebar{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    width:100%;
+    min-width:unset;
+    height:var(--sheet-full);
+    border-right:none;
+    border-top:.5px solid var(--border2);
+    border-radius:16px 16px 0 0;
+    z-index:50;
+    transform:translateY(calc(var(--sheet-full) - var(--sheet-mid)));
+    transition:transform .3s cubic-bezier(.25,.46,.45,.94);
+    will-change:transform;
+    /* prevent sheet from going above its full height */
+    max-height:var(--sheet-full);
+  }
+
+  /* Collapsed state — only peek shows */
+  #sidebar.sheet-collapsed{
+    transform:translateY(calc(var(--sheet-full) - var(--sheet-peek)));
+  }
+
+  /* Drag handle */
+  .sheet-handle{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:10px 0 6px;
+    cursor:grab;
+    flex-shrink:0;
+  }
+  .sheet-handle-bar{
+    width:36px; height:4px;
+    background:var(--border2);
+    border-radius:2px;
+  }
+
+  /* Compact sidebar top on mobile */
+  .sidebar-top{padding:10px 16px 10px;}
+  .sidebar-brand h2{font-size:15px;}
+
+  /* Presets bar more compact */
+  .presets-bar{padding:8px 16px;}
+
+  /* Section headers bigger tap target */
+  .section-header{padding:14px 16px;}
+  .section-body{padding:6px 16px 12px;}
+
+  /* Sidebar scroll fills remaining space */
+  .sidebar-scroll{
+    flex:1;
+    /* leave room for bottom safe area on iPhone */
+    padding-bottom:env(safe-area-inset-bottom,16px);
+  }
+
+  /* Bottom bar for export/copy */
+  .sidebar-bottom{padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);}
+
+  /* Zoom controls — top right on mobile */
+  #zoom-controls{
+    bottom:auto;
+    top:16px;
+    right:16px;
+  }
+
+  /* Toast stays in canvas area, adjust for sheet */
+  #toast{bottom:calc(var(--sheet-mid) + 12px);}
+
+  /* Hide desktop tooltip on mobile */
+  #tooltip{display:none;}
+
+  /* Layer weight slider bigger touch area */
+  input[type=range]{height:4px;}
+  input[type=range]::-webkit-slider-thumb{width:18px;height:18px;}
+
+  /* Toggle bigger */
+  .toggle{width:36px;height:20px;}
+  .toggle-thumb{width:14px;height:14px;}
+  .toggle input:checked~.toggle-thumb{transform:translateX(16px);}
+  .toggle-track{border-radius:10px;}
+}
+
+/* Hide handle on desktop */
+.sheet-handle{display:none;}
+
 </style>
 </head>
 <body>
@@ -220,6 +335,11 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
       <div class="sidebar-brand"><h2>Meridian</h2><div class="sidebar-loc" id="sidebar-loc" title="">—</div></div>
       <button class="new-btn" id="new-btn">New map</button>
     </div>
+    
+    <div class="sheet-handle" id="sheet-handle">
+          <div class="sheet-handle-bar"></div>
+    </div>
+    
     <div class="presets-bar">
       <span class="presets-label">Style</span>
       <div class="presets-swatches" id="presets-swatches"></div>
@@ -812,6 +932,128 @@ document.getElementById('copy-btn').addEventListener('click',()=>{
   const svgStr=`<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BASE} ${BASE}"><rect width="${BASE}" height="${BASE}" fill="${S.bgColor}"/>${content}</svg>`;
   navigator.clipboard.writeText(svgStr).then(()=>toast('SVG copied to clipboard')).catch(()=>toast('Copy failed — try Export instead',true));
 });
+// ── Mobile bottom sheet ───────────────────────────────────────
+function isMobile(){ return window.innerWidth <= 768; }
+
+(function initSheet(){
+  const sheet   = document.getElementById('sidebar');
+  const handle  = document.getElementById('sheet-handle');
+  if(!sheet || !handle) return;
+
+  let startY=0, startTranslate=0, isDragging=false;
+
+  // Current translate in px (positive = more hidden)
+  let currentTranslate = 0;
+
+  function getFullH(){ return sheet.offsetHeight; }
+  function getMidTranslate(){ return getFullH() - parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-mid').replace('vh','')) / 100 * window.innerHeight; }
+  function getPeekTranslate(){ return getFullH() - parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-peek').replace('px','')); }
+
+  function snapTo(translateY, animated=true){
+    currentTranslate = translateY;
+    sheet.style.transition = animated ? 'transform .3s cubic-bezier(.25,.46,.45,.94)' : 'none';
+    sheet.style.transform  = `translateY(${translateY}px)`;
+  }
+
+  function snapToNearest(velocity=0){
+    const mid  = getMidTranslate();
+    const peek = getPeekTranslate();
+    const full = 0; // fully open = no translation
+
+    // Decide snap target based on position + velocity
+    if(velocity < -0.5){
+      // Flicked up — go to full
+      snapTo(full);
+    } else if(velocity > 0.5){
+      // Flicked down
+      currentTranslate > mid ? snapTo(peek) : snapTo(mid);
+    } else {
+      // No strong velocity — snap to nearest
+      const dFull = Math.abs(currentTranslate - full);
+      const dMid  = Math.abs(currentTranslate - mid);
+      const dPeek = Math.abs(currentTranslate - peek);
+      const min   = Math.min(dFull, dMid, dPeek);
+      if(min === dFull)      snapTo(full);
+      else if(min === dMid)  snapTo(mid);
+      else                   snapTo(peek);
+    }
+  }
+
+  function onPointerDown(e){
+    if(!isMobile()) return;
+    isDragging=true;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    startTranslate = currentTranslate;
+    sheet.style.transition='none';
+    e.stopPropagation();
+  }
+
+  let lastY=0, lastT=0, velocity=0;
+
+  function onPointerMove(e){
+    if(!isDragging) return;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const delta = y - startY;
+    const now = Date.now();
+    velocity = (y - lastY) / (now - lastT || 1);
+    lastY=y; lastT=now;
+    const newT = Math.max(0, Math.min(getPeekTranslate(), startTranslate + delta));
+    currentTranslate = newT;
+    sheet.style.transform = `translateY(${newT}px)`;
+    e.preventDefault();
+  }
+
+  function onPointerUp(){
+    if(!isDragging) return;
+    isDragging=false;
+    snapToNearest(velocity);
+  }
+
+  // Attach to handle for drag
+  handle.addEventListener('touchstart', onPointerDown, {passive:true});
+  window.addEventListener('touchmove',  onPointerMove, {passive:false});
+  window.addEventListener('touchend',   onPointerUp);
+
+  // Also allow dragging from the sidebar-top on mobile
+  document.querySelector('.sidebar-top')?.addEventListener('touchstart', onPointerDown, {passive:true});
+
+  // Tap handle to toggle between mid and peek
+  handle.addEventListener('click', ()=>{
+    if(!isMobile()) return;
+    const mid  = getMidTranslate();
+    const peek = getPeekTranslate();
+    snapTo(currentTranslate <= mid + 10 ? peek : mid);
+  });
+
+  // Init position on mobile
+  function initPosition(){
+    if(!isMobile()) return;
+    currentTranslate = getMidTranslate();
+    snapTo(currentTranslate, false);
+  }
+
+  // Reset when returning to welcome / new map
+  const origNewBtn = document.getElementById('new-btn').onclick;
+  document.getElementById('new-btn').addEventListener('click', ()=>{
+    if(isMobile()) setTimeout(initPosition, 500);
+  });
+
+  // After map loads, settle to mid position
+  const origFetch = window.fetchAndRender;
+  // We hook into the overlay hide as the signal
+  const origHideOverlay = window.hideOverlay;
+  window.hideOverlay = function(){
+    origHideOverlay?.();
+    if(isMobile()) setTimeout(initPosition, 100);
+  };
+
+  window.addEventListener('resize', ()=>{
+    if(isMobile()) initPosition();
+    else { sheet.style.transform=''; sheet.style.transition=''; }
+  });
+
+  initPosition();
+})();
 </script>
 </body>
 </html>
