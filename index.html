@@ -212,16 +212,14 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
     border-right:none;
     border-top:.5px solid var(--border2);
     border-radius:16px 16px 0 0;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
     z-index:50;
     transform:translateY(calc(var(--sheet-full) - var(--sheet-mid)));
     transition:transform .3s cubic-bezier(.25,.46,.45,.94);
     will-change:transform;
-    /* prevent sheet from going above its full height */
     max-height:var(--sheet-full);
-    /* ensure flex children (incl. scroll area) respect height */
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
   }
 
   /* Collapsed state — only peek shows */
@@ -258,11 +256,11 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
   /* Sidebar scroll fills remaining space */
   .sidebar-scroll{
       flex:1;
+      min-height:0;
       overflow-y:scroll;
       -webkit-overflow-scrolling:touch;
       overscroll-behavior:contain;
       touch-action:pan-y;
-      min-height:0;
       padding-bottom:env(safe-area-inset-bottom,16px);
     }
 
@@ -568,11 +566,14 @@ function setMode(mode,animated=true){
   viewMode=mode;
   zoom=minZoom();
   panX=0;
-  // On mobile in fit mode, shift map up so it centers in the visible area
-  // above the sheet (screen height minus sheet mid height), not the full screen.
+  // On mobile in fit mode, top-align the map so the full square sits
+  // above the sheet rather than centering behind it.
   if(mode==='fit' && window.innerWidth<=640){
-    const sheetMidH = 0.42 * window.innerHeight;
-    panY = -(sheetMidH / 2);
+    const r=canvasRect();
+    const side=Math.max(r.width,r.height);
+    const renderedH=side*zoom; // height of map at fitZoom
+    // pan-layer centers by default; shift up so map top = canvas top
+    panY=-Math.max(0,(r.height-renderedH)/2);
   } else {
     panY=0;
   }
