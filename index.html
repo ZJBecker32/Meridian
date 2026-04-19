@@ -212,7 +212,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
     bottom:0; left:0; right:0;
     width:100%;
     min-width:unset;
-    height:46vh; /* JS will set this; fallback to mid */
+    height:60px; /* JS sets real collapsed height immediately; this prevents 46vh flash */
     max-height:88vh;
     border-right:none;
     border-top:.5px solid var(--border2);
@@ -251,37 +251,57 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
   .sidebar-brand h2{ font-size:16px; }
   .sidebar-loc{ margin-top:2px; }
 
-  /* Presets + scroll area fade when collapsing */
-  .presets-bar, .sidebar-scroll{
-    transition: opacity .25s ease, max-height .3s cubic-bezier(.25,.46,.45,.94);
-    overflow: hidden;
+  /* Collapsible zones — transition opacity + max-height together.
+     Explicit max-height in normal state is required for the animation to work. */
+  .presets-bar{
+    max-height:60px;
+    overflow:hidden;
+    transition: max-height .3s cubic-bezier(.25,.46,.45,.94), opacity .25s ease;
   }
-  .presets-bar.sheet-hidden, .sidebar-scroll.sheet-hidden{
-    opacity: 0;
-    max-height: 0 !important;
-    padding-top: 0;
-    padding-bottom: 0;
+  .sidebar-scroll{
+    /* max-height handled via flex:1 + container height; animate opacity only */
+    transition: opacity .25s ease;
+  }
+  .presets-bar.sheet-hidden{
+    max-height:0;
+    opacity:0;
+    padding-top:0;
+    padding-bottom:0;
+  }
+  .sidebar-scroll.sheet-hidden{
+    opacity:0;
+    pointer-events:none;
   }
 
-  /* Mobile export buttons — always at bottom of sheet in mid state */
+  /* Export button rows — stay in layout, fade in/out */
   .mobile-scroll-actions{
-    flex-shrink: 0;
-    padding: 10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);
-    border-top: .5px solid var(--border);
-    transition: opacity .3s ease;
+    flex-shrink:0;
+    max-height:80px;
+    overflow:hidden;
+    padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);
+    border-top:.5px solid var(--border);
+    transition: opacity .25s ease, max-height .3s cubic-bezier(.25,.46,.45,.94);
   }
   .mobile-scroll-actions.sheet-hidden{
-    opacity: 0;
-    pointer-events: none;
+    opacity:0;
+    max-height:0;
+    padding-top:0;
+    padding-bottom:0;
+    pointer-events:none;
+    border-top-color:transparent;
   }
-
-  /* sidebar-bottom fades in for full state */
   .sidebar-bottom{
-    transition: opacity .3s ease;
+    flex-shrink:0;
+    max-height:80px;
+    overflow:hidden;
+    transition: opacity .25s ease, max-height .3s cubic-bezier(.25,.46,.45,.94);
   }
   .sidebar-bottom.sheet-hidden{
-    opacity: 0;
-    pointer-events: none;
+    opacity:0;
+    max-height:0;
+    padding-top:0;
+    padding-bottom:0;
+    pointer-events:none;
   }
 
   /* Presets bar more compact */
@@ -1096,36 +1116,19 @@ function isMobile(){ return window.innerWidth <= 640; }
     return midH();
   }
 
-  // In full: sidebar-bottom visible, mobile-scroll-actions hidden
-  // In mid: sidebar-bottom hidden, mobile-scroll-actions visible
-  // In collapsed: both hidden
+  // Toggle export button visibility via class only — no display toggling
   function updateExportButtons(state){
     if(!sidebarBottom||!scrollActions) return;
     if(state==='full'){
-      // Show sidebar-bottom, hide scroll-actions
       sidebarBottom.classList.remove('sheet-hidden');
       scrollActions.classList.add('sheet-hidden');
-      // After transition, actually hide scroll-actions from layout
-      setTimeout(()=>{ if(sheetState==='full') scrollActions.style.display='none'; }, 320);
-      sidebarBottom.style.display='';
     } else if(state==='mid'){
-      // Show scroll-actions, hide sidebar-bottom
-      scrollActions.style.display='';
-      requestAnimationFrame(()=>{
-        scrollActions.classList.remove('sheet-hidden');
-        sidebarBottom.classList.add('sheet-hidden');
-        setTimeout(()=>{ if(sheetState!=='full') sidebarBottom.style.display='none'; }, 320);
-      });
+      sidebarBottom.classList.add('sheet-hidden');
+      scrollActions.classList.remove('sheet-hidden');
     } else {
       // collapsed — hide both
-      scrollActions.classList.add('sheet-hidden');
       sidebarBottom.classList.add('sheet-hidden');
-      setTimeout(()=>{
-        if(sheetState==='collapsed'){
-          scrollActions.style.display='none';
-          sidebarBottom.style.display='none';
-        }
-      }, 320);
+      scrollActions.classList.add('sheet-hidden');
     }
   }
 
@@ -1135,14 +1138,8 @@ function isMobile(){ return window.innerWidth <= 640; }
       if(scrollArea)  scrollArea.classList.add('sheet-hidden');
       if(presetsBar)  presetsBar.classList.add('sheet-hidden');
     } else {
-      if(scrollArea){
-        scrollArea.style.display='';
-        scrollArea.classList.remove('sheet-hidden');
-      }
-      if(presetsBar){
-        presetsBar.style.display='';
-        presetsBar.classList.remove('sheet-hidden');
-      }
+      if(scrollArea)  scrollArea.classList.remove('sheet-hidden');
+      if(presetsBar)  presetsBar.classList.remove('sheet-hidden');
     }
   }
 
@@ -1225,12 +1222,12 @@ function isMobile(){ return window.innerWidth <= 640; }
     if(!isMobile()){
       sheet.style.height='';
       sheet.style.transform='';
-      // Restore desktop layout
-      if(sidebarBottom) { sidebarBottom.style.display=''; sidebarBottom.classList.remove('sheet-hidden'); }
-      if(scrollActions) { scrollActions.style.display='none'; scrollActions.classList.add('sheet-hidden'); }
+      // Restore desktop — remove all mobile classes
       const presetsBar=document.querySelector('.presets-bar');
-      if(scrollArea){ scrollArea.style.display=''; scrollArea.classList.remove('sheet-hidden'); }
-      if(presetsBar){ presetsBar.style.display=''; presetsBar.classList.remove('sheet-hidden'); }
+      if(sidebarBottom) sidebarBottom.classList.remove('sheet-hidden');
+      if(scrollActions) scrollActions.classList.add('sheet-hidden');
+      if(scrollArea)    scrollArea.classList.remove('sheet-hidden');
+      if(presetsBar)    presetsBar.classList.remove('sheet-hidden');
       const zc=document.getElementById('zoom-controls');
       if(zc){zc.style.opacity='1';zc.style.pointerEvents='auto';}
       return;
@@ -1238,14 +1235,14 @@ function isMobile(){ return window.innerWidth <= 640; }
     snapTo(toState, false);
   }
 
-  // Start collapsed — stay that way until map loads
-  if(isMobile()) initPosition('collapsed');
+  // Start collapsed immediately (no animation) — wait for map load
+  initPosition('collapsed');
 
   // Hook into hideOverlay — expand to mid after successful load
   const _hideOverlay=window.hideOverlay;
   window.hideOverlay=function(){
     _hideOverlay?.();
-    if(isMobile()) setTimeout(()=>snapTo('mid'), 150);
+    if(isMobile()) setTimeout(()=>snapTo('mid'), 200);
   };
 
   document.getElementById('new-btn').addEventListener('click',()=>{
