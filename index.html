@@ -218,6 +218,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
     will-change:transform;
     /* prevent sheet from going above its full height */
     max-height:var(--sheet-full);
+    /* ensure flex children (incl. scroll area) respect height */
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
   }
 
   /* Collapsed state — only peek shows */
@@ -257,6 +261,8 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
       overflow-y:scroll;
       -webkit-overflow-scrolling:touch;
       overscroll-behavior:contain;
+      touch-action:pan-y;
+      min-height:0;
       padding-bottom:env(safe-area-inset-bottom,16px);
     }
 
@@ -561,7 +567,15 @@ function applyTransform(animated=false){
 function setMode(mode,animated=true){
   viewMode=mode;
   zoom=minZoom();
-  panX=0; panY=0;
+  panX=0;
+  // On mobile in fit mode, shift map up so it centers in the visible area
+  // above the sheet (screen height minus sheet mid height), not the full screen.
+  if(mode==='fit' && window.innerWidth<=640){
+    const sheetMidH = 0.42 * window.innerHeight;
+    panY = -(sheetMidH / 2);
+  } else {
+    panY=0;
+  }
   applyTransform(animated);
   document.getElementById('zc-fit').classList.toggle('active',mode==='fit');
   document.getElementById('zc-fill').classList.toggle('active',mode==='fill');
