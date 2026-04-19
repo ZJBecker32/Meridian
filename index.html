@@ -231,7 +231,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
       display:flex;
       justify-content:center;
       align-items:center;
-      padding:10px 0 6px;
+      padding:8px 0 4px;
       flex-shrink:0;
       touch-action:none;
       cursor:grab;
@@ -244,12 +244,45 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 
   /* Compact sidebar top on mobile — centered */
   .sidebar-top{
-    padding:14px 16px;
+    padding:12px 16px 13px;
     justify-content:space-between;
     align-items:center;
   }
   .sidebar-brand h2{ font-size:16px; }
   .sidebar-loc{ margin-top:2px; }
+
+  /* Presets + scroll area fade when collapsing */
+  .presets-bar, .sidebar-scroll{
+    transition: opacity .25s ease, max-height .3s cubic-bezier(.25,.46,.45,.94);
+    overflow: hidden;
+  }
+  .presets-bar.sheet-hidden, .sidebar-scroll.sheet-hidden{
+    opacity: 0;
+    max-height: 0 !important;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  /* Mobile export buttons — always at bottom of sheet in mid state */
+  .mobile-scroll-actions{
+    flex-shrink: 0;
+    padding: 10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);
+    border-top: .5px solid var(--border);
+    transition: opacity .3s ease;
+  }
+  .mobile-scroll-actions.sheet-hidden{
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* sidebar-bottom fades in for full state */
+  .sidebar-bottom{
+    transition: opacity .3s ease;
+  }
+  .sidebar-bottom.sheet-hidden{
+    opacity: 0;
+    pointer-events: none;
+  }
 
   /* Presets bar more compact */
   .presets-bar{padding:8px 16px;}
@@ -281,8 +314,19 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
     right:16px;
   }
 
-  /* Toast stays in canvas area, adjust for sheet */
-  #toast{bottom:calc(var(--sheet-mid) + 12px);}
+  /* Toast — fixed above the sheet on mobile */
+  #toast{
+    position:fixed;
+    bottom:calc(var(--sheet-h, 46vh) + 12px);
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    opacity:0;
+    transition:opacity .3s, transform .3s;
+  }
+  #toast.show{
+    transform:translateX(-50%) translateY(0);
+    opacity:1;
+  }
 
   /* Hide desktop tooltip on mobile */
   #tooltip{display:none;}
@@ -389,7 +433,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
       <div class="section collapsed" id="sec-natural">
         <div class="section-header" onclick="toggleSection('sec-natural')"><span class="section-label">Natural</span><span class="section-caret">▾</span></div>
         <div class="section-body" id="natural-layers"></div>
-          <div class="mobile-scroll-actions">
+      </div>
+    </div>
+    <!-- Mobile export buttons — shown inline in mid state, hidden in full (sidebar-bottom takes over) -->
+    <div class="mobile-scroll-actions">
             <div class="sidebar-bottom-row">
               <button class="copy-btn" id="copy-btn-scroll" disabled>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -401,8 +448,6 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
               </button>
             </div>
           </div>
-      </div>
-    </div>
     <div class="sidebar-bottom">
         <div class="sidebar-bottom-row">
             <button class="copy-btn" id="copy-btn" disabled>
@@ -1051,29 +1096,58 @@ function isMobile(){ return window.innerWidth <= 640; }
     return midH();
   }
 
-  // In full: sidebar-bottom floats, mobile-scroll-actions hidden
-  // In mid/collapsed: sidebar-bottom hidden, mobile-scroll-actions inline in scroll
+  // In full: sidebar-bottom visible, mobile-scroll-actions hidden
+  // In mid: sidebar-bottom hidden, mobile-scroll-actions visible
+  // In collapsed: both hidden
   function updateExportButtons(state){
     if(!sidebarBottom||!scrollActions) return;
     if(state==='full'){
+      // Show sidebar-bottom, hide scroll-actions
+      sidebarBottom.classList.remove('sheet-hidden');
+      scrollActions.classList.add('sheet-hidden');
+      // After transition, actually hide scroll-actions from layout
+      setTimeout(()=>{ if(sheetState==='full') scrollActions.style.display='none'; }, 320);
       sidebarBottom.style.display='';
-      scrollActions.style.display='none';
-    } else {
-      sidebarBottom.style.display='none';
+    } else if(state==='mid'){
+      // Show scroll-actions, hide sidebar-bottom
       scrollActions.style.display='';
+      requestAnimationFrame(()=>{
+        scrollActions.classList.remove('sheet-hidden');
+        sidebarBottom.classList.add('sheet-hidden');
+        setTimeout(()=>{ if(sheetState!=='full') sidebarBottom.style.display='none'; }, 320);
+      });
+    } else {
+      // collapsed — hide both
+      scrollActions.classList.add('sheet-hidden');
+      sidebarBottom.classList.add('sheet-hidden');
+      setTimeout(()=>{
+        if(sheetState==='collapsed'){
+          scrollActions.style.display='none';
+          sidebarBottom.style.display='none';
+        }
+      }, 320);
     }
   }
 
-  // Hide/show presets + scroll area in collapsed state
   function updateCollapsedUI(state){
     const presetsBar = document.querySelector('.presets-bar');
     if(state==='collapsed'){
-      if(scrollArea)  scrollArea.style.display='none';
-      if(presetsBar)  presetsBar.style.display='none';
+      if(scrollArea)  scrollArea.classList.add('sheet-hidden');
+      if(presetsBar)  presetsBar.classList.add('sheet-hidden');
     } else {
-      if(scrollArea)  scrollArea.style.display='';
-      if(presetsBar)  presetsBar.style.display='';
+      if(scrollArea){
+        scrollArea.style.display='';
+        scrollArea.classList.remove('sheet-hidden');
+      }
+      if(presetsBar){
+        presetsBar.style.display='';
+        presetsBar.classList.remove('sheet-hidden');
+      }
     }
+  }
+
+  function updateToast(heightPx){
+    document.documentElement.style.setProperty('--sheet-h', heightPx+'px');
   }
 
   function snapTo(state, animated=true){
@@ -1081,11 +1155,10 @@ function isMobile(){ return window.innerWidth <= 640; }
     const h = stateH(state);
     sheet.style.transition = animated ? 'height .3s cubic-bezier(.25,.46,.45,.94)' : 'none';
     sheet.style.height = h + 'px';
-    // Remove old transform-based positioning (bottom:0 in CSS handles anchoring)
     sheet.style.transform = '';
+    updateToast(h);
     updateExportButtons(state);
     updateCollapsedUI(state);
-    // Fade zoom controls when full
     const zc = document.getElementById('zoom-controls');
     if(zc){
       const isFull = state==='full';
@@ -1110,12 +1183,12 @@ function isMobile(){ return window.innerWidth <= 640; }
     if(!isDragging) return;
     const y = e.touches[0].clientY;
     const now = Date.now();
-    velocity = (lastY - y) / (now - lastT || 1); // positive = dragging up = expanding
+    velocity = (lastY - y) / (now - lastT || 1);
     lastY=y; lastT=now;
-    // Dragging up (finger moves up, y decreases) → sheet grows
     const delta = dragStartY - y;
     const newH = Math.max(collapsedH(), Math.min(fullH(), dragStartH + delta));
     sheet.style.height = newH + 'px';
+    updateToast(newH);
     e.preventDefault();
   }
 
@@ -1148,36 +1221,38 @@ function isMobile(){ return window.innerWidth <= 640; }
     else                          snapTo('mid');
   });
 
-  function initPosition(){
+  function initPosition(toState='mid'){
     if(!isMobile()){
       sheet.style.height='';
       sheet.style.transform='';
-      updateExportButtons('full'); // restore desktop layout
-      updateCollapsedUI('full');
+      // Restore desktop layout
+      if(sidebarBottom) { sidebarBottom.style.display=''; sidebarBottom.classList.remove('sheet-hidden'); }
+      if(scrollActions) { scrollActions.style.display='none'; scrollActions.classList.add('sheet-hidden'); }
+      const presetsBar=document.querySelector('.presets-bar');
+      if(scrollArea){ scrollArea.style.display=''; scrollArea.classList.remove('sheet-hidden'); }
+      if(presetsBar){ presetsBar.style.display=''; presetsBar.classList.remove('sheet-hidden'); }
       const zc=document.getElementById('zoom-controls');
       if(zc){zc.style.opacity='1';zc.style.pointerEvents='auto';}
       return;
     }
-    snapTo('mid', false);
+    snapTo(toState, false);
   }
 
-  // Hook into hideOverlay
+  // Start collapsed — stay that way until map loads
+  if(isMobile()) initPosition('collapsed');
+
+  // Hook into hideOverlay — expand to mid after successful load
   const _hideOverlay=window.hideOverlay;
   window.hideOverlay=function(){
     _hideOverlay?.();
-    if(isMobile()) setTimeout(initPosition,100);
+    if(isMobile()) setTimeout(()=>snapTo('mid'), 150);
   };
 
   document.getElementById('new-btn').addEventListener('click',()=>{
-    if(isMobile()) setTimeout(()=>snapTo('mid'),500);
+    if(isMobile()) setTimeout(()=>snapTo('collapsed'),500);
   });
 
-  window.addEventListener('resize',()=>{
-    if(isMobile()) initPosition();
-    else initPosition();
-  });
-
-  initPosition();
+  window.addEventListener('resize',()=>{ initPosition(sheetState); });
 })();
 </script>
 </body>
