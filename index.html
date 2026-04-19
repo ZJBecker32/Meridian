@@ -206,13 +206,14 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
     width:100%;
   }
 
-  /* Sidebar becomes a bottom sheet */
+  /* Sidebar becomes a bottom sheet — height controlled by JS */
   #sidebar{
     position:fixed;
     bottom:0; left:0; right:0;
     width:100%;
     min-width:unset;
-    height:var(--sheet-full);
+    height:46vh; /* JS will set this; fallback to mid */
+    max-height:88vh;
     border-right:none;
     border-top:.5px solid var(--border2);
     border-radius:16px 16px 0 0;
@@ -221,15 +222,8 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
     flex-direction:column;
     z-index:50;
     touch-action:pan-y;
-    transform:translateY(calc(var(--sheet-full) - var(--sheet-mid)));
-    transition:transform .3s cubic-bezier(.25,.46,.45,.94);
-    will-change:transform;
-    max-height:var(--sheet-full);
-  }
-
-  /* Collapsed state — only peek shows */
-  #sidebar.sheet-collapsed{
-    transform:translateY(calc(var(--sheet-full) - var(--sheet-peek)));
+    transition:height .3s cubic-bezier(.25,.46,.45,.94);
+    will-change:height;
   }
 
   /* Drag handle — iOS pill style */
@@ -248,8 +242,14 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
       border-radius:2px;
     }
 
-  /* Compact sidebar top on mobile */
-  .sidebar-top{padding:10px 16px 10px;}
+  /* Compact sidebar top on mobile — centered */
+  .sidebar-top{
+    padding:14px 16px;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .sidebar-brand h2{ font-size:16px; }
+  .sidebar-loc{ margin-top:2px; }
 
   /* Presets bar more compact */
   .presets-bar{padding:8px 16px;}
@@ -538,16 +538,24 @@ function fillZoom(){
 function minZoom(){return viewMode==='fit'?fitZoom():fillZoom();}
 
 // Clamp pan so the map edge never goes past the canvas edge.
-// At the min zoom, the map may be larger than the canvas in one axis —
-// allow panning the excess. At zoom above min, both axes may have excess.
+// Exception: in fit mode on mobile, allow a negative panY offset so the
+// map can be top-aligned (sitting above the sheet) rather than centered.
 function clampPan(){
   const r=canvasRect();
-  const side=Math.max(r.width,r.height); // matches sizeMapSVG
+  const side=Math.max(r.width,r.height);
   const rendered=side*zoom;
   const maxX=Math.max(0,(rendered-r.width)/2);
-  const maxY=Math.max(0,(rendered-r.height)/2);
+  let maxY=Math.max(0,(rendered-r.height)/2);
+  // In fit mode on mobile: the map is shorter than the canvas height.
+  // Allow panY to go negative by the centering gap so top-align works.
+  let minY=-maxY;
+  if(viewMode==='fit' && window.innerWidth<=640){
+    const gap=Math.max(0,(r.height-rendered)/2);
+    minY=-gap; // allow shifting up by the centering gap
+    maxY=0;    // but not down (map top stays at or above canvas top)
+  }
   panX=Math.max(-maxX,Math.min(maxX,panX));
-  panY=Math.max(-maxY,Math.min(maxY,panY));
+  panY=Math.max(minY,Math.min(maxY,panY));
 }
 
 function applyTransform(animated=false){
@@ -1010,112 +1018,150 @@ new MutationObserver(()=>{
   if(_copyScroll) _copyScroll.disabled=_copyBtn.disabled;
 }).observe(_copyBtn,{attributes:true,attributeFilter:['disabled']});
 
-// ── Mobile bottom sheet ───────────────────────────────────────
+// ── Mobile bottom sheet (height-resize approach) ──────────────
 function isMobile(){ return window.innerWidth <= 640; }
 
 (function initSheet(){
   const sheet  = document.getElementById('sidebar');
   const handle = document.getElementById('sheet-handle');
   const sTop   = document.querySelector('.sidebar-top');
+  const scrollArea = document.querySelector('.sidebar-scroll');
+  const sidebarBottom = document.querySelector('.sidebar-bottom');
+  const scrollActions = document.querySelector('.mobile-scroll-actions');
   if(!sheet||!handle) return;
 
-  let currentTranslate=0, startY=0, startTranslate=0;
-  let isDragging=false, lastY=0, lastT=0, velocity=0;
+  // Three states: 'full' | 'mid' | 'collapsed'
+  let sheetState = 'mid';
 
   function vh(){ return window.innerHeight; }
-  function getFullH(){ return sheet.offsetHeight; }
-  function getMidT(){
-    const midVh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-mid'))/100;
-    return getFullH()-midVh*vh();
-  }
-  function getPeekT(){
-    const peek=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sheet-peek'));
-    return getFullH()-peek;
+
+  // Heights for each state
+  function fullH()      { return Math.round(0.88 * vh()); }
+  function midH()       { return Math.round(0.46 * vh()); }
+  function collapsedH() {
+    // Just the handle + sidebar-top height
+    const topH = sTop ? sTop.offsetHeight : 56;
+    return (handle ? handle.offsetHeight : 20) + topH;
   }
 
-  function snapTo(t,animated=true){
-    currentTranslate=Math.max(0,Math.min(getPeekT(),t));
-    sheet.style.transition=animated?'transform .3s cubic-bezier(.25,.46,.45,.94)':'none';
-    sheet.style.transform=`translateY(${currentTranslate}px)`;
-    // Fade zoom controls when sheet fully open
-    const zc=document.getElementById('zoom-controls');
+  function stateH(state){
+    if(state==='full')      return fullH();
+    if(state==='mid')       return midH();
+    if(state==='collapsed') return collapsedH();
+    return midH();
+  }
+
+  // In full: sidebar-bottom floats, mobile-scroll-actions hidden
+  // In mid/collapsed: sidebar-bottom hidden, mobile-scroll-actions inline in scroll
+  function updateExportButtons(state){
+    if(!sidebarBottom||!scrollActions) return;
+    if(state==='full'){
+      sidebarBottom.style.display='';
+      scrollActions.style.display='none';
+    } else {
+      sidebarBottom.style.display='none';
+      scrollActions.style.display='';
+    }
+  }
+
+  // Hide/show presets + scroll area in collapsed state
+  function updateCollapsedUI(state){
+    const presetsBar = document.querySelector('.presets-bar');
+    if(state==='collapsed'){
+      if(scrollArea)  scrollArea.style.display='none';
+      if(presetsBar)  presetsBar.style.display='none';
+    } else {
+      if(scrollArea)  scrollArea.style.display='';
+      if(presetsBar)  presetsBar.style.display='';
+    }
+  }
+
+  function snapTo(state, animated=true){
+    sheetState = state;
+    const h = stateH(state);
+    sheet.style.transition = animated ? 'height .3s cubic-bezier(.25,.46,.45,.94)' : 'none';
+    sheet.style.height = h + 'px';
+    // Remove old transform-based positioning (bottom:0 in CSS handles anchoring)
+    sheet.style.transform = '';
+    updateExportButtons(state);
+    updateCollapsedUI(state);
+    // Fade zoom controls when full
+    const zc = document.getElementById('zoom-controls');
     if(zc){
-      const isFullOpen=currentTranslate<10;
+      const isFull = state==='full';
       zc.style.transition='opacity .25s';
-      zc.style.opacity=isFullOpen?'0':'1';
-      zc.style.pointerEvents=isFullOpen?'none':'auto';
+      zc.style.opacity = isFull ? '0' : '1';
+      zc.style.pointerEvents = isFull ? 'none' : 'auto';
     }
   }
 
-  function snapNearest(vel=0){
-    const mid=getMidT(), peek=getPeekT(), full=0;
-    let target;
-    if(vel<-0.4) target=full;
-    else if(vel>0.4) target=currentTranslate>mid?peek:mid;
-    else{
-      const dF=Math.abs(currentTranslate-full);
-      const dM=Math.abs(currentTranslate-mid);
-      const dP=Math.abs(currentTranslate-peek);
-      target=[full,mid,peek][[dF,dM,dP].indexOf(Math.min(dF,dM,dP))];
-    }
-    snapTo(target);
-  }
+  // Drag to resize — track finger from handle or sidebar-top
+  let isDragging=false, dragStartY=0, dragStartH=0, lastY=0, lastT=0, velocity=0;
 
-  // Only drag from handle or sidebar-top
   function startDrag(clientY){
     isDragging=true;
-    startY=clientY; startTranslate=currentTranslate;
+    dragStartY=clientY;
+    dragStartH=sheet.offsetHeight;
     lastY=clientY; lastT=Date.now(); velocity=0;
     sheet.style.transition='none';
   }
 
-  handle.addEventListener('touchstart',e=>{
-    if(!isMobile())return;
-    startDrag(e.touches[0].clientY);
-  },{passive:true});
-
-  sTop?.addEventListener('touchstart',e=>{
-    if(!isMobile())return;
-    startDrag(e.touches[0].clientY);
-  },{passive:true});
-
-  // touchmove only on handle/sTop — don't block scroll elsewhere
   function onDragMove(e){
-    if(!isDragging)return;
-    const y=e.touches[0].clientY;
-    const now=Date.now();
-    velocity=(y-lastY)/(now-lastT||1);
+    if(!isDragging) return;
+    const y = e.touches[0].clientY;
+    const now = Date.now();
+    velocity = (lastY - y) / (now - lastT || 1); // positive = dragging up = expanding
     lastY=y; lastT=now;
-    const t=Math.max(0,Math.min(getPeekT(),startTranslate+(y-startY)));
-    currentTranslate=t;
-    sheet.style.transform=`translateY(${t}px)`;
+    // Dragging up (finger moves up, y decreases) → sheet grows
+    const delta = dragStartY - y;
+    const newH = Math.max(collapsedH(), Math.min(fullH(), dragStartH + delta));
+    sheet.style.height = newH + 'px';
     e.preventDefault();
   }
 
-  handle.addEventListener('touchmove',onDragMove,{passive:false});
-  sTop?.addEventListener('touchmove',onDragMove,{passive:false});
-
-  window.addEventListener('touchend',()=>{
-    if(!isDragging)return;
+  function onDragEnd(){
+    if(!isDragging) return;
     isDragging=false;
-    snapNearest(velocity);
-  });
+    const h = sheet.offsetHeight;
+    const mid = midH(), full = fullH(), col = collapsedH();
+    let target;
+    if(velocity > 0.4)       target = h > (mid+full)/2 ? 'full' : 'mid';
+    else if(velocity < -0.4) target = h < (col+mid)/2  ? 'collapsed' : 'mid';
+    else {
+      const dF=Math.abs(h-full), dM=Math.abs(h-mid), dC=Math.abs(h-col);
+      target = ['full','mid','collapsed'][[dF,dM,dC].indexOf(Math.min(dF,dM,dC))];
+    }
+    snapTo(target);
+  }
 
-  // Tap handle to cycle peek→mid→full
+  handle.addEventListener('touchstart', e=>{ if(!isMobile())return; startDrag(e.touches[0].clientY); },{passive:true});
+  sTop?.addEventListener('touchstart',  e=>{ if(!isMobile())return; startDrag(e.touches[0].clientY); },{passive:true});
+  handle.addEventListener('touchmove', onDragMove, {passive:false});
+  sTop?.addEventListener('touchmove',  onDragMove, {passive:false});
+  window.addEventListener('touchend',  onDragEnd);
+
+  // Tap handle to cycle collapsed→mid→full→mid→collapsed
   handle.addEventListener('click',()=>{
-    if(!isMobile())return;
-    const mid=getMidT(), peek=getPeekT();
-    if(currentTranslate>=peek-10) snapTo(mid);
-    else if(currentTranslate>=mid-10) snapTo(0);
-    else snapTo(mid);
+    if(!isMobile()) return;
+    if(sheetState==='collapsed') snapTo('mid');
+    else if(sheetState==='mid')  snapTo('full');
+    else                          snapTo('mid');
   });
 
   function initPosition(){
-    if(!isMobile()){sheet.style.transform='';return;}
-    snapTo(getMidT(),false);
+    if(!isMobile()){
+      sheet.style.height='';
+      sheet.style.transform='';
+      updateExportButtons('full'); // restore desktop layout
+      updateCollapsedUI('full');
+      const zc=document.getElementById('zoom-controls');
+      if(zc){zc.style.opacity='1';zc.style.pointerEvents='auto';}
+      return;
+    }
+    snapTo('mid', false);
   }
 
-  // Hook into hideOverlay to set position after map loads
+  // Hook into hideOverlay
   const _hideOverlay=window.hideOverlay;
   window.hideOverlay=function(){
     _hideOverlay?.();
@@ -1123,12 +1169,12 @@ function isMobile(){ return window.innerWidth <= 640; }
   };
 
   document.getElementById('new-btn').addEventListener('click',()=>{
-    if(isMobile()) setTimeout(initPosition,500);
+    if(isMobile()) setTimeout(()=>snapTo('mid'),500);
   });
 
   window.addEventListener('resize',()=>{
     if(isMobile()) initPosition();
-    else{ sheet.style.transform=''; }
+    else initPosition();
   });
 
   initPosition();
