@@ -181,6 +181,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 .modal-confirm{flex:2;background:var(--accent);border:none;border-radius:var(--radius);padding:10px;font-family:var(--sans);font-size:13px;font-weight:500;color:#1a1400;cursor:pointer;transition:opacity .15s;}
 .modal-confirm:hover{opacity:.88;}
 
+/* Hide handle on desktop — must be BEFORE media query so mobile display:flex overrides */
+.sheet-handle{display:none;}
+.mobile-scroll-actions{display:none;}
+
 /* ── Mobile layout ───────────────────────────────────────────── */
 @media(max-width:640px){
 
@@ -216,6 +220,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
     display:flex;
     flex-direction:column;
     z-index:50;
+    touch-action:pan-y;
     transform:translateY(calc(var(--sheet-full) - var(--sheet-mid)));
     transition:transform .3s cubic-bezier(.25,.46,.45,.94);
     will-change:transform;
@@ -306,10 +311,6 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
       border-top:.5px solid var(--border);
     }
 }
-
-/* Hide handle on desktop */
-.sheet-handle{display:none;}
-.mobile-scroll-actions{ display:none; }
 
 </style>
 </head>
