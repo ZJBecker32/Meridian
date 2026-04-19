@@ -226,18 +226,18 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
   }
 
   /* Drag handle — iOS pill style */
-    .sheet-handle{
+  .sheet-handle{
       display:flex;
       justify-content:center;
       align-items:center;
-      padding:8px 0 4px;
-      cursor:grab;
+      padding:10px 0 6px;
       flex-shrink:0;
       touch-action:none;
+      cursor:grab;
     }
     .sheet-handle-bar{
-      width:32px; height:4px;
-      background:rgba(255,255,255,0.28);
+      width:36px; height:4px;
+      background:rgba(255,255,255,0.3);
       border-radius:2px;
     }
 
@@ -253,10 +253,12 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 
   /* Sidebar scroll fills remaining space */
   .sidebar-scroll{
-    flex:1;
-    /* leave room for bottom safe area on iPhone */
-    padding-bottom:env(safe-area-inset-bottom,16px);
-  }
+      flex:1;
+      overflow-y:scroll;
+      -webkit-overflow-scrolling:touch;
+      overscroll-behavior:contain;
+      padding-bottom:env(safe-area-inset-bottom,16px);
+    }
 
   /* Bottom bar for export/copy */
   .sidebar-bottom{padding:6px 16px calc(env(safe-area-inset-bottom,0px) + 8px);}
@@ -290,7 +292,9 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
   .input-wrap input{ font-size:16px; }
   .radius-custom-input-row input{ font-size:16px; }
   /* Give radius pills room to breathe */
-  .radius-pills{ padding-top:2px; }
+  .radius-pills{ padding-top:3px; overflow:visible; }
+  .radius-control{ overflow:visible; }
+  .welcome-card > div { overflow:visible; }
   .presets-bar{ padding-top:10px; }
   
   .mobile-scroll-actions{
@@ -348,17 +352,15 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 
 <!-- App -->
 <div id="app">
-  <div id="sidebar">
-    <div class="sidebar-top">
-      <div class="sidebar-brand"><h2>Meridian</h2><div class="sidebar-loc" id="sidebar-loc" title="">—</div></div>
-      <button class="new-btn" id="new-btn">New map</button>
-    </div>
-    
-    <div class="sheet-handle" id="sheet-handle">
+    <div id="sidebar">
+        <div class="sheet-handle" id="sheet-handle">
           <div class="sheet-handle-bar"></div>
-    </div>
-    
-    <div class="presets-bar">
+        </div>
+        <div class="sidebar-top">
+          <div class="sidebar-brand"><h2>Meridian</h2><div class="sidebar-loc" id="sidebar-loc" title="">—</div></div>
+          <button class="new-btn" id="new-btn">New map</button>
+        </div>
+        <div class="presets-bar">
       <span class="presets-label">Style</span>
       <div class="presets-swatches" id="presets-swatches"></div>
     </div>
@@ -518,17 +520,14 @@ function svgSide(){return svgEl().offsetWidth||600;}
 // Zoom at which SVG height fills canvas height exactly (some gray on sides for wide canvases)
 function fitZoom(){
   const r=canvasRect();
-  const side = r.width > r.height ? r.width : r.height;
-  // Fit: zoom so the smaller canvas dimension is filled
-  const smaller = Math.min(r.width, r.height);
-  return smaller / side;
+  const side=Math.max(r.width,r.height);
+  const smaller=Math.min(r.width,r.height);
+  return smaller/side;
 }
 function fillZoom(){
-  const r=canvasRect();
-  const side = r.width > r.height ? r.width : r.height;
-  // Fill: zoom so the larger canvas dimension is covered
-  const larger = Math.max(r.width, r.height);
-  return larger / side;
+  // fill = zoom so larger canvas dimension fills
+  // since side = max(w,h), this is always 1.0
+  return 1.0;
 }
 // Min zoom for current mode
 function minZoom(){return viewMode==='fit'?fitZoom():fillZoom();}
@@ -536,23 +535,12 @@ function minZoom(){return viewMode==='fit'?fitZoom():fillZoom();}
 // Clamp pan so the map edge never goes past the canvas edge.
 // At the min zoom, the map may be larger than the canvas in one axis —
 // allow panning the excess. At zoom above min, both axes may have excess.
-function sheetOffset(){
-  // Visual offset so map centers in visible area above sheet on mobile
-  if(!isMobile()) return 0;
-  const sheetMidVh=parseFloat(
-    getComputedStyle(document.documentElement)
-      .getPropertyValue('--sheet-mid')
-  )/100*window.innerHeight;
-  return sheetMidVh/2;
-}
-
 function clampPan(){
   const r=canvasRect();
-  const side=svgEl().offsetWidth||r.width;
+  const side=Math.max(r.width,r.height); // matches sizeMapSVG
   const rendered=side*zoom;
   const maxX=Math.max(0,(rendered-r.width)/2);
-  // Vertical: account for sheet offset so you can pan to map edges
-  const maxY=Math.max(sheetOffset(),(rendered-r.height)/2+sheetOffset());
+  const maxY=Math.max(0,(rendered-r.height)/2);
   panX=Math.max(-maxX,Math.min(maxX,panX));
   panY=Math.max(-maxY,Math.min(maxY,panY));
 }
@@ -572,8 +560,8 @@ function applyTransform(animated=false){
 
 function setMode(mode,animated=true){
   viewMode=mode;
-  if(mode==='fit'){zoom=fitZoom();panX=0;panY=-sheetOffset();}
-  if(mode==='fill'){zoom=fillZoom();panX=0;panY=-sheetOffset();}
+  zoom=minZoom();
+  panX=0; panY=0;
   applyTransform(animated);
   document.getElementById('zc-fit').classList.toggle('active',mode==='fit');
   document.getElementById('zc-fill').classList.toggle('active',mode==='fill');
@@ -761,11 +749,10 @@ function nodeIdsToFill(ids,nm){const ns=ids.map(id=>nm[id]).filter(Boolean);if(n
 // fill zoom = canvasW / svgSide  → SVG width fills canvas width
 function sizeMapSVG(){
   const r=canvasRect();
-  // On portrait (mobile): SVG side = canvas height so fit=zoom1, fill covers width
-  // On landscape (desktop): SVG side = canvas width so fill=zoom1, fit shows full map
-  const side = r.width > r.height ? r.width : r.height;
-  svgEl().style.width  = side + 'px';
-  svgEl().style.height = side + 'px';
+  // Always use the larger dimension so both fit and fill are achievable via scale
+  const side=Math.max(r.width,r.height);
+  svgEl().style.width =side+'px';
+  svgEl().style.height=side+'px';
 }
 
 // ── Build SVG content ─────────────────────────────────────────────
@@ -802,8 +789,10 @@ function restyle(){
   const content=buildSVGContent();
   svgEl().innerHTML=`<rect width="${BASE}" height="${BASE}" fill="${S.bgColor}"/>`+content;
   window._lastContent=content;
-  // Re-snap to current mode (recalculate zoom floor in case canvas resized)
-  setMode(viewMode, false);
+  // Only re-snap if at the mode floor, otherwise preserve user's zoom/pan
+  const mz=minZoom();
+  if(zoom<=mz+0.001) setMode(viewMode,false);
+  else applyTransform(false);
 }
 
 function resolveWays(els,nm){return els.filter(e=>e.type==='way').map(w=>({...w,rn:(w.nodes||[]).map(id=>nm[id]).filter(Boolean)})).filter(w=>w.rn.length>=2);}
