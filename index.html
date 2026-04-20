@@ -1,636 +1,401 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Meridian</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;1,300&display=swap" rel="stylesheet">
-  <meta property="og:title" content="Meridian">
-  <meta property="og:description" content="Street map generator">
-  <meta property="og:image" content="https://zjbecker32.github.io/Meridian/share.png">
-  <meta property="og:url" content="https://zjbecker32.github.io/Meridian/">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://zjbecker32.github.io/Meridian/share.png">
-  <style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Meridian</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;1,300&display=swap" rel="stylesheet">
+<meta property="og:title" content="Meridian">
+<meta property="og:description" content="Street map generator">
+<meta property="og:image" content="https://zjbecker32.github.io/Meridian/share.png">
+<meta property="og:url" content="https://zjbecker32.github.io/Meridian/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://zjbecker32.github.io/Meridian/share.png">
+<style>
+:root{
+  --bg:#0c0c0d;--surface:#141415;--surface2:#1c1c1e;--surface3:#242426;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);
+  --text:#e4e2dd;--muted:#62615f;--muted2:#4a4948;
+  --accent:#c8a96e;--accent-bg:rgba(200,169,110,0.09);--danger:#b85c4a;
+  --sidebar-w:300px;--radius:8px;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--serif:'Playfair Display',serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;-webkit-font-smoothing:antialiased;}
 
-/* ── Design tokens ─────────────────────────────────────────────── */
-:root {
-  --bg: #0c0c0d;
-  --surface: #141415;
-  --surface2: #1c1c1e;
-  --surface3: #242426;
-  --border: rgba(255,255,255,0.06);
-  --border2: rgba(255,255,255,0.11);
-  --text: #e4e2dd;
-  --muted: #62615f;
-  --muted2: #4a4948;
-  --accent: #c8a96e;
-  --accent-bg: rgba(200,169,110,0.09);
-  --danger: #b85c4a;
-  --sidebar-w: 300px;
-  --radius: 8px;
-  --mono: 'DM Mono', monospace;
-  --sans: 'DM Sans', sans-serif;
-  --serif: 'Playfair Display', serif;
+#welcome{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:100;transition:opacity .45s,transform .45s;}
+#welcome.out{opacity:0;pointer-events:none;transform:scale(.97);}
+.welcome-card{width:420px;background:var(--surface);border:.5px solid var(--border2);border-radius:16px;padding:36px;display:flex;flex-direction:column;gap:28px;}
+.brand h1{font-family:var(--serif);font-style:italic;font-size:30px;font-weight:400;letter-spacing:-.02em;line-height:1;color:var(--text);}
+.brand p{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:7px;}
+.input-wrap{position:relative;display:flex;align-items:center;}
+.input-wrap svg{position:absolute;left:13px;color:var(--muted);pointer-events:none;}
+.input-wrap input{width:100%;background:var(--surface2);border:.5px solid var(--border2);border-radius:var(--radius);padding:11px 13px 11px 38px;font-family:var(--sans);font-size:13px;color:var(--text);outline:none;transition:border-color .2s;}
+.input-wrap input::placeholder{color:var(--muted);}
+.input-wrap input:focus{border-color:var(--accent);}
+.radius-control{display:flex;flex-direction:column;gap:8px;}
+.radius-label-row{display:flex;justify-content:space-between;align-items:center;}
+.radius-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+.radius-custom-link{font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:2px;transition:color .15s;}
+.radius-custom-link:hover{color:var(--accent);}
+.radius-pills{display:flex;gap:5px;}
+.radius-pill{flex:1;background:var(--surface2);border:.5px solid var(--border);border-radius:6px;padding:8px 4px;text-align:center;cursor:pointer;transition:all .15s;font-family:var(--mono);font-size:11px;color:var(--muted);user-select:none;}
+.radius-pill:hover{border-color:var(--border2);color:var(--text);}
+.radius-pill.active{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
+.radius-custom-wrap{display:none;flex-direction:column;gap:6px;}
+.radius-custom-wrap.show{display:flex;}
+.radius-custom-input-row{display:flex;gap:8px;align-items:center;}
+.radius-custom-input-row input{flex:1;background:var(--surface2);border:.5px solid var(--border2);border-radius:6px;padding:9px 12px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none;transition:border-color .2s;}
+.radius-custom-input-row input:focus{border-color:var(--accent);}
+.radius-custom-input-row span{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;}
+.radius-warning{display:none;font-family:var(--mono);font-size:10px;color:var(--accent);padding:7px 10px;background:var(--accent-bg);border:.5px solid rgba(200,169,110,.2);border-radius:6px;line-height:1.5;}
+.radius-warning.show{display:block;}
+.welcome-error{font-family:var(--mono);font-size:11px;color:var(--danger);display:none;}
+.welcome-error.show{display:block;}
+.btn-primary{width:100%;background:var(--accent);color:#1a1400;border:none;border-radius:var(--radius);padding:12px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-primary:hover{opacity:.9;}
+.btn-primary:active{transform:scale(.99);}
+.btn-primary:disabled{opacity:.38;cursor:not-allowed;}
+.welcome-footer{font-family:var(--mono);font-size:10px;color:var(--muted2);letter-spacing:.04em;}
+
+/* ── Mobile bottom sheet variables ───────────────────────────── */
+:root{
+  --sheet-peek:64px;       /* handle + presets visible when collapsed */
+  --sheet-mid:42vh;        /* default resting height */
+  --sheet-full:88vh;       /* swiped fully open */
 }
 
-/* ── Reset ─────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  width: 100%; height: 100%;
-  overflow: hidden;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: 13px;
-  -webkit-font-smoothing: antialiased;
-}
+#app{display:flex;width:100%;height:100%;opacity:0;transition:opacity .45s;}
+#app.visible{opacity:1;}
 
-/* ── Welcome screen ────────────────────────────────────────────── */
-#welcome {
-  position: fixed; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--bg);
-  z-index: 100;
-  transition: opacity .45s, transform .45s;
-}
-#welcome.out { opacity: 0; pointer-events: none; transform: scale(.97); }
+#sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);height:100%;background:var(--surface);border-right:.5px solid var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:2;}
+.sidebar-top{padding:18px 18px 14px;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;}
+.sidebar-brand{min-width:0;flex:1;}
+.sidebar-brand h2{font-family:var(--serif);font-style:italic;font-size:17px;font-weight:400;color:var(--text);letter-spacing:-.01em;line-height:1;}
+.sidebar-loc{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;}
+.new-btn{flex-shrink:0;background:none;border:.5px solid var(--border2);border-radius:6px;padding:5px 10px;font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;transition:all .15s;}
+.new-btn:hover{border-color:var(--accent);color:var(--accent);}
+.presets-bar{padding:10px 18px;border-bottom:.5px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.presets-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;}
+.presets-swatches{display:flex;gap:7px;align-items:center;}
+.preset-dot{width:18px;height:18px;border-radius:50%;cursor:pointer;flex-shrink:0;border:1.5px solid rgba(255,255,255,.22);transition:transform .15s,box-shadow .15s;}
+.preset-dot:hover{transform:scale(1.15);}
+.preset-dot.active{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px rgba(255,255,255,.7);}
+#tooltip{position:fixed;background:var(--surface2);border:.5px solid var(--border2);border-radius:5px;padding:3px 8px;font-family:var(--mono);font-size:10px;color:var(--text);pointer-events:none;z-index:1000;white-space:nowrap;opacity:0;transition:opacity .15s;}
+#tooltip.show{opacity:1;}
+.sidebar-scroll{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--surface3) transparent;}
+.sidebar-scroll::-webkit-scrollbar{width:3px;}
+.sidebar-scroll::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px;}
+.section{border-bottom:.5px solid var(--border);}
+.section-header{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;cursor:pointer;user-select:none;transition:background .1s;}
+.section-header:hover{background:rgba(255,255,255,.018);}
+.section-label{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+.section-caret{color:var(--muted);font-size:9px;transition:transform .2s;}
+.section.collapsed .section-caret{transform:rotate(-90deg);}
+.section-body{padding:6px 18px 12px;}
+.section.collapsed .section-body{display:none;}
+.color-row{display:flex;align-items:center;gap:10px;padding:5px 0;}
+.color-row label{flex:1;color:var(--text);font-size:13px;}
+.swatch{position:relative;width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(255,255,255,.22);overflow:hidden;cursor:pointer;flex-shrink:0;}
+.swatch input[type=color]{position:absolute;inset:-6px;opacity:0;cursor:pointer;width:300%;height:300%;}
+.layer-row{padding:7px 0;border-bottom:.5px solid var(--border);}
+.layer-row:last-child{border-bottom:none;}
+.layer-top{display:flex;align-items:center;gap:8px;}
+.line-preview{width:20px;border-radius:1px;background:#888;flex-shrink:0;transition:background .2s,height .15s;}
+.layer-name{flex:1;font-size:13px;color:var(--text);transition:color .15s;}
+.layer-row.off .layer-name{color:var(--muted);}
+.layer-row.off .line-preview{opacity:.2;}
+.layer-row.off .swatch{opacity:.4;}
+.toggle{position:relative;width:28px;height:16px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:var(--surface3);border:.5px solid var(--border2);border-radius:8px;cursor:pointer;transition:background .2s,border-color .2s;}
+.toggle input:checked+.toggle-track{background:var(--accent);border-color:var(--accent);}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:10px;height:10px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none;}
+.toggle input:checked~.toggle-thumb{transform:translateX(12px);}
+.weight-row{display:flex;align-items:center;gap:6px;margin-top:5px;padding-left:28px;}
+input[type=range]{flex:1;-webkit-appearance:none;height:2px;background:var(--surface3);border-radius:1px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;border-radius:50%;background:var(--accent);cursor:pointer;border:none;transition:transform .1s;}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+.weight-num{width:36px;background:none;border:none;border-bottom:.5px solid var(--border2);border-radius:0;padding:1px 2px;font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;outline:none;transition:border-color .15s,color .15s;-moz-appearance:textfield;}
+.weight-num::-webkit-inner-spin-button,.weight-num::-webkit-outer-spin-button{-webkit-appearance:none;}
+.weight-num:focus{border-color:var(--accent);color:var(--text);}
+.sidebar-bottom{padding:10px 18px;border-top:.5px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:7px;}
+.sidebar-bottom-row{display:flex;gap:7px;}
+.sidebar-bottom-row .copy-btn{flex:1;}
+.sidebar-bottom-row .export-btn{flex:1;}
+.export-btn{background:var(--accent);color:#1a1400;border:none;border-radius:var(--radius);padding:11px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:7px;}
+.export-btn:hover{opacity:.88;}
+.export-btn:disabled{opacity:.3;cursor:not-allowed;}
+.copy-btn{background:none;border:.5px solid var(--border2);border-radius:var(--radius);padding:9px;font-family:var(--sans);font-size:12px;color:var(--muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+.copy-btn:disabled{opacity:.3;cursor:not-allowed;}
 
-.welcome-card {
-  width: 420px;
-  background: var(--surface);
-  border: .5px solid var(--border2);
-  border-radius: 16px;
-  padding: 36px;
-  display: flex; flex-direction: column; gap: 28px;
-}
-.brand h1 {
-  font-family: var(--serif); font-style: italic;
-  font-size: 30px; font-weight: 400;
-  letter-spacing: -.02em; line-height: 1;
-  color: var(--text);
-}
-.brand p {
-  font-family: var(--mono); font-size: 10px;
-  color: var(--muted); letter-spacing: .1em;
-  text-transform: uppercase; margin-top: 7px;
-}
-.input-wrap { position: relative; display: flex; align-items: center; }
-.input-wrap svg { position: absolute; left: 13px; color: var(--muted); pointer-events: none; }
-.input-wrap input {
-  width: 100%;
-  background: var(--surface2);
-  border: .5px solid var(--border2);
-  border-radius: var(--radius);
-  padding: 11px 13px 11px 38px;
-  font-family: var(--sans); font-size: 13px;
-  color: var(--text); outline: none;
-  transition: border-color .2s;
-}
-.input-wrap input::placeholder { color: var(--muted); }
-.input-wrap input:focus { border-color: var(--accent); }
+/* Canvas */
+#canvas-area{flex:1;position:relative;overflow:hidden;background:#0c0c0d;user-select:none;cursor:grab;touch-action:none;}
+#canvas-area.panning{cursor:grabbing;}
+#pan-layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform-origin:center center;}
+#map-svg{display:block;flex-shrink:0;}
 
-.radius-control { display: flex; flex-direction: column; gap: 8px; }
-.radius-label-row { display: flex; justify-content: space-between; align-items: center; }
-.radius-label {
-  font-family: var(--mono); font-size: 10px;
-  color: var(--muted); letter-spacing: .08em; text-transform: uppercase;
-}
-.radius-custom-link {
-  font-family: var(--mono); font-size: 10px; color: var(--muted);
-  cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
-  transition: color .15s;
-}
-.radius-custom-link:hover { color: var(--accent); }
-.radius-pills { display: flex; gap: 5px; }
-.radius-pill {
-  flex: 1;
-  background: var(--surface2);
-  border: .5px solid var(--border);
-  border-radius: 6px; padding: 8px 4px;
-  text-align: center; cursor: pointer;
-  font-family: var(--mono); font-size: 11px; color: var(--muted);
-  user-select: none; transition: all .15s;
-}
-.radius-pill:hover { border-color: var(--border2); color: var(--text); }
-.radius-pill.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-.radius-custom-wrap { display: none; flex-direction: column; gap: 6px; }
-.radius-custom-wrap.show { display: flex; }
-.radius-custom-input-row { display: flex; gap: 8px; align-items: center; }
-.radius-custom-input-row input {
-  flex: 1;
-  background: var(--surface2); border: .5px solid var(--border2);
-  border-radius: 6px; padding: 9px 12px;
-  font-family: var(--mono); font-size: 13px; color: var(--text);
-  outline: none; transition: border-color .2s;
-}
-.radius-custom-input-row input:focus { border-color: var(--accent); }
-.radius-custom-input-row span { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
-.radius-warning {
-  display: none;
-  font-family: var(--mono); font-size: 10px; color: var(--accent);
-  padding: 7px 10px; line-height: 1.5;
-  background: var(--accent-bg);
-  border: .5px solid rgba(200,169,110,.2); border-radius: 6px;
-}
-.radius-warning.show { display: block; }
-.welcome-error { font-family: var(--mono); font-size: 11px; color: var(--danger); display: none; }
-.welcome-error.show { display: block; }
-.btn-primary {
-  width: 100%;
-  background: var(--accent); color: #1a1400;
-  border: none; border-radius: var(--radius); padding: 12px;
-  font-family: var(--sans); font-size: 13px; font-weight: 500;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  transition: opacity .15s, transform .1s;
-}
-.btn-primary:hover { opacity: .9; }
-.btn-primary:active { transform: scale(.99); }
-.btn-primary:disabled { opacity: .38; cursor: not-allowed; }
-.welcome-footer { font-family: var(--mono); font-size: 10px; color: var(--muted2); letter-spacing: .04em; }
+/* Zoom controls */
+#zoom-controls{position:absolute;bottom:20px;right:20px;display:flex;flex-direction:column;gap:4px;z-index:20;}
+.zc-btn{width:32px;height:28px;background:var(--surface);border:.5px solid var(--border2);border-radius:6px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,color .15s,background .15s;user-select:none;font-family:var(--mono);}
+.zc-btn:hover{border-color:var(--border2);color:var(--text);}
+.zc-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
+.zc-pm{font-size:20px;font-weight:300;font-family:var(--sans);line-height:1;}
+.zc-label{font-size:9px;letter-spacing:.03em;}
 
-/* ── App shell ─────────────────────────────────────────────────── */
-#app { display: flex; width: 100%; height: 100%; opacity: 0; transition: opacity .45s; }
-#app.visible { opacity: 1; }
+/* Overlay */
+#overlay{position:absolute;inset:0;z-index:10;background:rgba(9,9,10,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .35s;}
+#overlay.hidden{opacity:0;pointer-events:none;}
+.spinner{width:24px;height:24px;border:1.5px solid rgba(255,255,255,.08);border-top-color:var(--accent);border-radius:50%;animation:spin .85s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.overlay-label{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.05em;}
+.overlay-sub{font-family:var(--mono);font-size:10px;color:var(--muted2);margin-top:-8px;}
 
-/* ── Sidebar ───────────────────────────────────────────────────── */
-#sidebar {
-  width: var(--sidebar-w); min-width: var(--sidebar-w); height: 100%;
-  background: var(--surface);
-  border-right: .5px solid var(--border);
-  display: flex; flex-direction: column;
-  overflow: hidden; z-index: 2;
-}
-.sidebar-top {
-  padding: 18px 18px 14px;
-  border-bottom: .5px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0; gap: 10px;
-}
-.sidebar-brand { min-width: 0; flex: 1; }
-.sidebar-brand h2 {
-  font-family: var(--serif); font-style: italic;
-  font-size: 17px; font-weight: 400;
-  color: var(--text); letter-spacing: -.01em; line-height: 1;
-}
-.sidebar-loc {
-  font-family: var(--mono); font-size: 10px; color: var(--muted);
-  margin-top: 4px; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis; cursor: default;
-}
-.new-btn {
-  flex-shrink: 0;
-  background: none; border: .5px solid var(--border2); border-radius: 6px;
-  padding: 5px 10px;
-  font-family: var(--mono); font-size: 10px; color: var(--muted);
-  cursor: pointer; transition: all .15s;
-}
-.new-btn:hover { border-color: var(--accent); color: var(--accent); }
-.presets-bar {
-  padding: 10px 18px;
-  border-bottom: .5px solid var(--border);
-  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-}
-.presets-label {
-  font-family: var(--mono); font-size: 10px; color: var(--muted);
-  letter-spacing: .06em; text-transform: uppercase; flex-shrink: 0;
-}
-.presets-swatches { display: flex; gap: 7px; align-items: center; }
-.preset-dot {
-  width: 18px; height: 18px; border-radius: 50%;
-  cursor: pointer; flex-shrink: 0;
-  border: 1.5px solid rgba(255,255,255,.22);
-  transition: transform .15s, box-shadow .15s;
-}
-.preset-dot:hover { transform: scale(1.15); }
-.preset-dot.active { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px rgba(255,255,255,.7); }
+/* Canvas error */
+#canvas-error{position:absolute;inset:0;z-index:11;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+#canvas-error.show{display:flex;}
+.error-msg{font-family:var(--mono);font-size:12px;color:var(--danger);text-align:center;max-width:280px;line-height:1.6;}
+.retry-btn{background:none;border:.5px solid var(--border2);border-radius:6px;padding:7px 16px;font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;}
+.retry-btn:hover{border-color:var(--accent);color:var(--accent);}
 
-#tooltip {
-  position: fixed;
-  background: var(--surface2); border: .5px solid var(--border2); border-radius: 5px;
-  padding: 3px 8px;
-  font-family: var(--mono); font-size: 10px; color: var(--text);
-  pointer-events: none; z-index: 1000; white-space: nowrap;
-  opacity: 0; transition: opacity .15s;
-}
-#tooltip.show { opacity: 1; }
+/* Toast inside canvas */
+#toast{position:absolute;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--surface);border:.5px solid var(--border2);border-radius:var(--radius);padding:9px 16px;font-family:var(--mono);font-size:11px;color:var(--text);transition:transform .3s;z-index:20;white-space:nowrap;pointer-events:none;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.error{border-color:var(--danger);color:var(--danger);}
 
-.sidebar-scroll {
-  flex: 1; overflow-y: auto; overflow-x: hidden;
-  scrollbar-width: thin; scrollbar-color: var(--surface3) transparent;
-}
-.sidebar-scroll::-webkit-scrollbar { width: 3px; }
-.sidebar-scroll::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+/* Export modal */
+#export-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:center;justify-content:center;}
+#export-modal.open{display:flex;}
+.modal-card{background:var(--surface);border:.5px solid var(--border2);border-radius:12px;padding:26px;width:320px;display:flex;flex-direction:column;gap:18px;}
+.modal-title{font-family:var(--serif);font-style:italic;font-size:20px;font-weight:400;color:var(--text);}
+.modal-field{display:flex;flex-direction:column;gap:7px;}
+.modal-label{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.modal-dims{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.modal-input{min-width:0;width:100%;background:var(--surface2);border:.5px solid var(--border2);border-radius:6px;padding:9px 10px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .2s;}
+.modal-input:focus{border-color:var(--accent);}
+.modal-warning{font-family:var(--mono);font-size:10px;color:var(--accent);padding:7px 10px;background:var(--accent-bg);border:.5px solid rgba(200,169,110,.18);border-radius:6px;line-height:1.5;display:none;}
+.modal-warning.show{display:block;}
+.format-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:2px;overflow:visible;}
+.format-btn{background:var(--surface2);border:.5px solid var(--border);border-radius:6px;padding:9px;text-align:center;cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--muted);transition:all .15s;}
+.format-btn:hover{border-color:var(--border2);color:var(--text);}
+.format-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
+.modal-actions{display:flex;gap:8px;}
+.modal-cancel{flex:1;background:none;border:.5px solid var(--border2);border-radius:var(--radius);padding:10px;font-family:var(--sans);font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;}
+.modal-cancel:hover{border-color:var(--text);color:var(--text);}
+.modal-confirm{flex:2;background:var(--accent);border:none;border-radius:var(--radius);padding:10px;font-family:var(--sans);font-size:13px;font-weight:500;color:#1a1400;cursor:pointer;transition:opacity .15s;}
+.modal-confirm:hover{opacity:.88;}
 
-/* ── Sections ──────────────────────────────────────────────────── */
-.section { border-bottom: .5px solid var(--border); }
-.section-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 11px 18px; cursor: pointer; user-select: none;
-  transition: background .1s;
-}
-.section-header:hover { background: rgba(255,255,255,.018); }
-.section-label { font-family: var(--mono); font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
-.section-caret { color: var(--muted); font-size: 9px; transition: transform .2s; }
-.section.collapsed .section-caret { transform: rotate(-90deg); }
-.section-body { padding: 6px 18px 12px; }
-.section.collapsed .section-body { display: none; }
+/* Hide handle on desktop — must be BEFORE media query so mobile display:flex overrides */
+.sheet-handle{display:none;}
+.mobile-scroll-actions{display:none;}
 
-/* ── Layer controls ────────────────────────────────────────────── */
-.color-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
-.color-row label { flex: 1; color: var(--text); font-size: 13px; }
-.swatch {
-  position: relative; width: 20px; height: 20px;
-  border-radius: 50%; border: 1.5px solid rgba(255,255,255,.22);
-  overflow: hidden; cursor: pointer; flex-shrink: 0;
-}
-.swatch input[type=color] { position: absolute; inset: -6px; opacity: 0; cursor: pointer; width: 300%; height: 300%; }
-.layer-row { padding: 7px 0; border-bottom: .5px solid var(--border); }
-.layer-row:last-child { border-bottom: none; }
-.layer-top { display: flex; align-items: center; gap: 8px; }
-.line-preview { width: 20px; border-radius: 1px; background: #888; flex-shrink: 0; transition: background .2s, height .15s; }
-.layer-name { flex: 1; font-size: 13px; color: var(--text); transition: color .15s; }
-.layer-row.off .layer-name { color: var(--muted); }
-.layer-row.off .line-preview { opacity: .2; }
-.layer-row.off .swatch { opacity: .4; }
-.toggle { position: relative; width: 28px; height: 16px; flex-shrink: 0; }
-.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
-.toggle-track {
-  position: absolute; inset: 0;
-  background: var(--surface3); border: .5px solid var(--border2); border-radius: 8px;
-  cursor: pointer; transition: background .2s, border-color .2s;
-}
-.toggle input:checked + .toggle-track { background: var(--accent); border-color: var(--accent); }
-.toggle-thumb {
-  position: absolute; top: 2px; left: 2px;
-  width: 10px; height: 10px;
-  background: #fff; border-radius: 50%;
-  transition: transform .2s; pointer-events: none;
-}
-.toggle input:checked ~ .toggle-thumb { transform: translateX(12px); }
-.weight-row { display: flex; align-items: center; gap: 6px; margin-top: 5px; padding-left: 28px; }
-input[type=range] { flex: 1; -webkit-appearance: none; height: 2px; background: var(--surface3); border-radius: 1px; outline: none; cursor: pointer; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; border-radius: 50%; background: var(--accent); cursor: pointer; border: none; transition: transform .1s; }
-input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-.weight-num {
-  width: 36px; background: none; border: none;
-  border-bottom: .5px solid var(--border2); border-radius: 0;
-  padding: 1px 2px;
-  font-family: var(--mono); font-size: 10px; color: var(--muted);
-  text-align: right; outline: none;
-  transition: border-color .15s, color .15s;
-  -moz-appearance: textfield;
-}
-.weight-num::-webkit-inner-spin-button,
-.weight-num::-webkit-outer-spin-button { -webkit-appearance: none; }
-.weight-num:focus { border-color: var(--accent); color: var(--text); }
+/* ── Mobile layout ───────────────────────────────────────────── */
+@media(max-width:640px){
 
-/* ── Sidebar bottom bar ────────────────────────────────────────── */
-.sidebar-bottom {
-  padding: 10px 18px; border-top: .5px solid var(--border);
-  flex-shrink: 0; display: flex; flex-direction: column; gap: 7px;
-}
-.sidebar-bottom-row { display: flex; gap: 7px; }
-.sidebar-bottom-row .copy-btn,
-.sidebar-bottom-row .export-btn { flex: 1; }
-.export-btn {
-  background: var(--accent); color: #1a1400;
-  border: none; border-radius: var(--radius); padding: 11px;
-  font-family: var(--sans); font-size: 13px; font-weight: 500;
-  cursor: pointer; transition: opacity .15s;
-  display: flex; align-items: center; justify-content: center; gap: 7px;
-}
-.export-btn:hover { opacity: .88; }
-.export-btn:disabled { opacity: .3; cursor: not-allowed; }
-.copy-btn {
-  background: none; border: .5px solid var(--border2); border-radius: var(--radius); padding: 9px;
-  font-family: var(--sans); font-size: 12px; color: var(--muted);
-  cursor: pointer; transition: all .15s;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-}
-.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
-.copy-btn:disabled { opacity: .3; cursor: not-allowed; }
-
-/* ── Canvas ────────────────────────────────────────────────────── */
-#canvas-area {
-  flex: 1; position: relative; overflow: hidden;
-  background: #0c0c0d; user-select: none;
-  cursor: grab; touch-action: none;
-}
-#canvas-area.panning { cursor: grabbing; }
-#pan-layer {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  transform-origin: center center;
-}
-#map-svg { display: block; flex-shrink: 0; }
-
-/* ── Zoom controls ─────────────────────────────────────────────── */
-#zoom-controls { position: absolute; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 4px; z-index: 20; }
-.zc-btn {
-  width: 32px; height: 28px;
-  background: var(--surface); border: .5px solid var(--border2); border-radius: 6px;
-  color: var(--muted); cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--mono); user-select: none;
-  transition: border-color .15s, color .15s, background .15s;
-}
-.zc-btn:hover { border-color: var(--border2); color: var(--text); }
-.zc-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-.zc-pm { font-size: 20px; font-weight: 300; font-family: var(--sans); line-height: 1; }
-.zc-label { font-size: 9px; letter-spacing: .03em; }
-
-/* ── Loading overlay ───────────────────────────────────────────── */
-#overlay {
-  position: absolute; inset: 0; z-index: 10;
-  background: rgba(9,9,10,.88);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
-  transition: opacity .35s;
-}
-#overlay.hidden { opacity: 0; pointer-events: none; }
-.spinner {
-  width: 24px; height: 24px;
-  border: 1.5px solid rgba(255,255,255,.08); border-top-color: var(--accent);
-  border-radius: 50%; animation: spin .85s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.overlay-label { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .05em; }
-.overlay-sub { font-family: var(--mono); font-size: 10px; color: var(--muted2); margin-top: -8px; }
-
-/* ── Canvas error state ────────────────────────────────────────── */
-#canvas-error { position: absolute; inset: 0; z-index: 11; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
-#canvas-error.show { display: flex; }
-.error-msg { font-family: var(--mono); font-size: 12px; color: var(--danger); text-align: center; max-width: 280px; line-height: 1.6; }
-.retry-btn {
-  background: none; border: .5px solid var(--border2); border-radius: 6px;
-  padding: 7px 16px;
-  font-family: var(--mono); font-size: 11px; color: var(--muted);
-  cursor: pointer; transition: all .15s;
-}
-.retry-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-/* ── Toast ─────────────────────────────────────────────────────── */
-#toast {
-  position: absolute; bottom: 20px; left: 50%;
-  transform: translateX(-50%) translateY(60px);
-  background: var(--surface); border: .5px solid var(--border2); border-radius: var(--radius);
-  padding: 9px 16px;
-  font-family: var(--mono); font-size: 11px; color: var(--text);
-  transition: transform .3s; z-index: 20; white-space: nowrap; pointer-events: none;
-}
-#toast.show { transform: translateX(-50%) translateY(0); }
-#toast.error { border-color: var(--danger); color: var(--danger); }
-
-/* ── Export modal ──────────────────────────────────────────────── */
-#export-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 300; align-items: center; justify-content: center; }
-#export-modal.open { display: flex; }
-.modal-card {
-  background: var(--surface); border: .5px solid var(--border2); border-radius: 12px;
-  padding: 26px; width: 320px;
-  display: flex; flex-direction: column; gap: 18px; overflow: hidden;
-}
-.modal-title { font-family: var(--serif); font-style: italic; font-size: 20px; font-weight: 400; color: var(--text); }
-.modal-field { display: flex; flex-direction: column; gap: 7px; }
-.modal-label { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.modal-dims { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.modal-input {
-  min-width: 0; width: 100%;
-  background: var(--surface2); border: .5px solid var(--border2); border-radius: 6px;
-  padding: 9px 10px;
-  font-family: var(--mono); font-size: 12px; color: var(--text);
-  outline: none; transition: border-color .2s;
-}
-.modal-input:focus { border-color: var(--accent); }
-.modal-warning {
-  display: none;
-  font-family: var(--mono); font-size: 10px; color: var(--accent);
-  padding: 7px 10px; line-height: 1.5;
-  background: var(--accent-bg); border: .5px solid rgba(200,169,110,.18); border-radius: 6px;
-}
-.modal-warning.show { display: block; }
-.format-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.format-btn {
-  background: var(--surface2); border: .5px solid var(--border); border-radius: 6px;
-  padding: 9px; text-align: center; cursor: pointer;
-  font-family: var(--mono); font-size: 11px; color: var(--muted);
-  transition: all .15s;
-}
-.format-btn:hover { border-color: var(--border2); color: var(--text); }
-.format-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-.modal-actions { display: flex; gap: 8px; }
-.modal-cancel {
-  flex: 1;
-  background: none; border: .5px solid var(--border2); border-radius: var(--radius); padding: 10px;
-  font-family: var(--sans); font-size: 13px; color: var(--muted);
-  cursor: pointer; transition: all .15s;
-}
-.modal-cancel:hover { border-color: var(--text); color: var(--text); }
-.modal-confirm {
-  flex: 2;
-  background: var(--accent); border: none; border-radius: var(--radius); padding: 10px;
-  font-family: var(--sans); font-size: 13px; font-weight: 500; color: #1a1400;
-  cursor: pointer; transition: opacity .15s;
-}
-.modal-confirm:hover { opacity: .88; }
-
-/* ── Desktop-only: hide mobile elements ────────────────────────── */
-/* Must appear BEFORE the media query so mobile overrides take effect */
-.sheet-handle { display: none; }
-.mobile-scroll-actions { display: none; }
-
-/* ── Mobile layout ─────────────────────────────────────────────── */
-@media (max-width: 640px) {
-
-  .welcome-card {
-    width: calc(100% - 32px);
-    max-width: 420px;
-    padding: 28px 24px;
+  /* Welcome card goes full width */
+  .welcome-card{
+    width:calc(100% - 32px);
+    max-width:420px;
+    padding:28px 24px;
   }
 
-  #app { flex-direction: column; }
+  /* App flips to column — canvas on top, sheet on bottom */
+  #app{flex-direction:column;}
 
-  #canvas-area {
-    position: fixed; inset: 0;
-    height: 100%; width: 100%;
+  /* Canvas fills everything, sheet overlays it */
+  #canvas-area{
+    position:fixed;
+    inset:0;
+    height:100%;
+    width:100%;
   }
 
-  /* Bottom sheet — height driven by JS */
-  #sidebar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    width: 100%; min-width: unset;
-    height: 60px; /* prevents flash before JS sets real collapsed height */
-    max-height: 88vh;
-    border-right: none;
-    border-top: .5px solid var(--border2);
-    border-radius: 16px 16px 0 0;
-    overflow: hidden;
-    display: flex; flex-direction: column;
-    z-index: 50;
-    touch-action: pan-y;
-    transition: height .3s cubic-bezier(.25,.46,.45,.94);
-    will-change: height;
+  /* Sidebar becomes a bottom sheet — height controlled by JS */
+  #sidebar{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    width:100%;
+    min-width:unset;
+    height:60px; /* JS sets real collapsed height immediately; this prevents 46vh flash */
+    max-height:88vh;
+    border-right:none;
+    border-top:.5px solid var(--border2);
+    border-radius:16px 16px 0 0;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    z-index:50;
+    touch-action:pan-y;
+    transition:height .3s cubic-bezier(.25,.46,.45,.94);
+    will-change:height;
   }
 
-  /* Drag handle pill */
-  .sheet-handle {
-    display: flex; justify-content: center; align-items: center;
-    padding: 8px 0 0;
-    flex-shrink: 0;
-    touch-action: none;
-    cursor: grab;
-  }
-  .sheet-handle-bar {
-    width: 36px; height: 4px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 2px;
-  }
+  /* Drag handle — iOS pill style */
+  .sheet-handle{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:8px 0 0px;
+      flex-shrink:0;
+      touch-action:none;
+      cursor:grab;
+    }
+    .sheet-handle-bar{
+      width:36px; height:4px;
+      background:rgba(255,255,255,0.3);
+      border-radius:2px;
+    }
 
-  /* Sidebar header */
-  .sidebar-top {
-    padding: 4px 16px 16px;
-    justify-content: space-between;
-    align-items: center;
+  /* Compact sidebar top on mobile — centered */
+  .sidebar-top{
+    padding: 4px 16px 16px 16px;
+    justify-content:space-between;
+    align-items:center;
   }
-  .sidebar-brand h2 { font-size: 16px; }
-  .sidebar-loc { margin-top: 2px; }
+  .sidebar-brand h2{ font-size:16px; }
+  .sidebar-loc{ margin-top:2px; }
 
-  /* Presets bar — animates out when collapsed */
-  .presets-bar {
-    max-height: 60px;
-    overflow: hidden;
+  /* Collapsible zones — transition opacity + max-height together.
+     Explicit max-height in normal state is required for the animation to work. */
+  .presets-bar{
+    max-height:60px;
+    overflow:hidden;
     transition: max-height .3s cubic-bezier(.25,.46,.45,.94), opacity .25s ease;
   }
-  .presets-bar.sheet-hidden {
-    max-height: 0;
-    opacity: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
-  /* Scroll area — fades out when collapsed */
-  .sidebar-scroll {
+  .sidebar-scroll{
+    /* max-height handled via flex:1 + container height; animate opacity only */
     transition: opacity .25s ease;
   }
-  .sidebar-scroll.sheet-hidden {
-    opacity: 0;
-    pointer-events: none;
+  .presets-bar.sheet-hidden{
+    max-height:0;
+    opacity:0;
+    padding-top:0;
+    padding-bottom:0;
+  }
+  .sidebar-scroll.sheet-hidden{
+    opacity:0;
+    pointer-events:none;
   }
 
-  /* Mobile export buttons (shown in mid state) */
-  .mobile-scroll-actions {
-    flex-shrink: 0;
-    max-height: 80px;
-    overflow: hidden;
-    padding: 10px 16px calc(env(safe-area-inset-bottom, 0px) + 10px);
-    border-top: .5px solid var(--border);
+  /* Export button rows — stay in layout, fade in/out */
+  .mobile-scroll-actions{
+    flex-shrink:0;
+    max-height:80px;
+    overflow:hidden;
+    padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);
+    border-top:.5px solid var(--border);
     transition: opacity .25s ease, max-height .3s cubic-bezier(.25,.46,.45,.94);
   }
-  .mobile-scroll-actions.sheet-hidden {
-    opacity: 0;
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    pointer-events: none;
-    border-top-color: transparent;
+  .mobile-scroll-actions.sheet-hidden{
+    opacity:0;
+    max-height:0;
+    padding-top:0;
+    padding-bottom:0;
+    pointer-events:none;
+    border-top-color:transparent;
   }
-
-  /* Sidebar bottom bar (shown in full state, floats at bottom) */
-  .sidebar-bottom {
-    flex-shrink: 0;
-    max-height: 80px;
-    overflow: hidden;
+  .sidebar-bottom{
+    flex-shrink:0;
+    max-height:80px;
+    overflow:hidden;
     transition: opacity .25s ease, max-height .3s cubic-bezier(.25,.46,.45,.94);
   }
-  .sidebar-bottom.sheet-hidden {
-    opacity: 0;
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    pointer-events: none;
+  .sidebar-bottom.sheet-hidden{
+    opacity:0;
+    max-height:0;
+    padding-top:0;
+    padding-bottom:0;
+    pointer-events:none;
   }
 
-  /* Scroll area sizing */
-  .sidebar-scroll {
-    flex: 1;
-    min-height: 0;
-    overflow-y: scroll;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    touch-action: pan-y;
-    padding-bottom: env(safe-area-inset-bottom, 16px);
-  }
-  .sidebar-scroll .section:last-child { border-bottom: none; }
+  /* Presets bar more compact */
+  .presets-bar{padding:8px 16px;}
 
-  /* Sidebar bottom bar padding */
-  .sidebar-bottom { padding: 6px 16px calc(env(safe-area-inset-bottom, 0px) + 8px); }
+  /* Section headers bigger tap target */
+  .section-header{padding:14px 16px;}
+  .section-body{padding:6px 16px 12px;}
+
+  /* Sidebar scroll fills remaining space */
+  .sidebar-scroll{
+      flex:1;
+      min-height:0;
+      overflow-y:scroll;
+      -webkit-overflow-scrolling:touch;
+      overscroll-behavior:contain;
+      touch-action:pan-y;
+      padding-bottom:env(safe-area-inset-bottom,16px);
+    }
+
+  /* Bottom bar for export/copy */
+  .sidebar-bottom{padding:6px 16px calc(env(safe-area-inset-bottom,0px) + 8px);}
+    /* Collapse last section's bottom padding */
+    .sidebar-scroll .section:last-child{border-bottom:none;}
 
   /* Zoom controls — top right on mobile */
-  #zoom-controls { bottom: auto; top: 16px; right: 16px; }
-
-  /* Toast — fixed above the sheet */
-  #toast {
-    position: fixed;
-    bottom: calc(var(--sheet-h, 46vh) + 12px);
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    opacity: 0;
-    transition: opacity .3s, transform .3s;
+  #zoom-controls{
+    bottom:auto;
+    top:16px;
+    right:16px;
   }
-  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-  /* Tooltip hidden on mobile */
-  #tooltip { display: none; }
-
-  /* Larger touch targets */
-  .section-header { padding: 14px 16px; }
-  .section-body { padding: 6px 16px 12px; }
-  input[type=range] { height: 4px; }
-  input[type=range]::-webkit-slider-thumb { width: 18px; height: 18px; }
-  .toggle { width: 36px; height: 20px; }
-  .toggle-thumb { width: 14px; height: 14px; }
-  .toggle input:checked ~ .toggle-thumb { transform: translateX(16px); }
-  .toggle-track { border-radius: 10px; }
-
-  /* 16px prevents iOS auto-zoom on input focus */
-  .input-wrap input { font-size: 16px; }
-  .radius-custom-input-row input { font-size: 16px; }
-
-  /* Overflow fixes for border rendering */
-  .radius-pills { padding-top: 3px; overflow: visible; }
-  .radius-control { overflow: visible; }
-  .welcome-card > div { overflow: visible; }
-  .format-grid { overflow: visible; padding: 2px; }
-  .presets-bar { padding-top: 10px; }
-
-  .mobile-scroll-actions {
-    padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
-    border-top: .5px solid var(--border);
+  /* Toast — fixed above the sheet on mobile */
+  #toast{
+    position:fixed;
+    bottom:calc(var(--sheet-h, 46vh) + 12px);
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    opacity:0;
+    transition:opacity .3s, transform .3s;
   }
+  #toast.show{
+    transform:translateX(-50%) translateY(0);
+    opacity:1;
+  }
+
+  /* Hide desktop tooltip on mobile */
+  #tooltip{display:none;}
+
+  /* Layer weight slider bigger touch area */
+  input[type=range]{height:4px;}
+  input[type=range]::-webkit-slider-thumb{width:18px;height:18px;}
+
+  /* Toggle bigger */
+  .toggle{width:36px;height:20px;}
+  .toggle-thumb{width:14px;height:14px;}
+  .toggle input:checked~.toggle-thumb{transform:translateX(16px);}
+  .toggle-track{border-radius:10px;}
+  
+  /* 16px prevents iOS auto-zoom, visually compensated by container */
+  .input-wrap input{ font-size:16px; }
+  .radius-custom-input-row input{ font-size:16px; }
+  /* Give radius pills room to breathe */
+  .radius-pills{ padding-top:3px; overflow:visible; }
+  .radius-control{ overflow:visible; }
+  .welcome-card > div { overflow:visible; }
+  .presets-bar{ padding-top:10px; }
+  
+  .mobile-scroll-actions{
+      padding:12px 16px calc(env(safe-area-inset-bottom,0px)+16px);
+      border-top:.5px solid var(--border);
+    }
 }
 
-  </style>
+</style>
 </head>
 <body>
-
 <div id="tooltip"></div>
 
-<!-- ── Welcome screen ───────────────────────────────────────────── -->
+<!-- Welcome -->
 <div id="welcome">
   <div class="welcome-card">
-    <div class="brand">
-      <h1>Meridian</h1>
-      <p>Street map generator</p>
-    </div>
+    <div class="brand"><h1>Meridian</h1><p>Street map generator</p></div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <div class="input-wrap">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="city-input" placeholder="City, neighborhood, or place…" autocomplete="off"/>
       </div>
       <div class="radius-control">
@@ -654,9 +419,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
       </div>
       <div class="welcome-error" id="welcome-error"></div>
       <button class="btn-primary" id="generate-btn">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M5 12h14M12 5l7 7-7 7"/>
-        </svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         Generate map
       </button>
     </div>
@@ -664,100 +427,66 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
   </div>
 </div>
 
-<!-- ── App ──────────────────────────────────────────────────────── -->
+<!-- App -->
 <div id="app">
-
-  <div id="sidebar">
-    <div class="sheet-handle" id="sheet-handle">
-      <div class="sheet-handle-bar"></div>
-    </div>
-    <div class="sidebar-top">
-      <div class="sidebar-brand">
-        <h2>Meridian</h2>
-        <div class="sidebar-loc" id="sidebar-loc" title="">—</div>
-      </div>
-      <button class="new-btn" id="new-btn">New map</button>
-    </div>
-    <div class="presets-bar">
+    <div id="sidebar">
+        <div class="sheet-handle" id="sheet-handle">
+          <div class="sheet-handle-bar"></div>
+        </div>
+        <div class="sidebar-top">
+          <div class="sidebar-brand"><h2>Meridian</h2><div class="sidebar-loc" id="sidebar-loc" title="">—</div></div>
+          <button class="new-btn" id="new-btn">New map</button>
+        </div>
+        <div class="presets-bar">
       <span class="presets-label">Style</span>
       <div class="presets-swatches" id="presets-swatches"></div>
     </div>
     <div class="sidebar-scroll">
       <div class="section" id="sec-canvas">
-        <div class="section-header" onclick="toggleSection('sec-canvas')">
-          <span class="section-label">Canvas</span>
-          <span class="section-caret">▾</span>
-        </div>
-        <div class="section-body">
-          <div class="color-row">
-            <label>Background</label>
-            <div class="swatch" id="bg-swatch" style="background:#0c0c0d">
-              <input type="color" id="bg-color" value="#0c0c0d"/>
-            </div>
-          </div>
-        </div>
+        <div class="section-header" onclick="toggleSection('sec-canvas')"><span class="section-label">Canvas</span><span class="section-caret">▾</span></div>
+        <div class="section-body"><div class="color-row"><label>Background</label><div class="swatch" id="bg-swatch" style="background:#0c0c0d"><input type="color" id="bg-color" value="#0c0c0d"/></div></div></div>
       </div>
       <div class="section" id="sec-roads">
-        <div class="section-header" onclick="toggleSection('sec-roads')">
-          <span class="section-label">Roads</span>
-          <span class="section-caret">▾</span>
-        </div>
+        <div class="section-header" onclick="toggleSection('sec-roads')"><span class="section-label">Roads</span><span class="section-caret">▾</span></div>
         <div class="section-body" id="road-layers"></div>
       </div>
       <div class="section" id="sec-transit">
-        <div class="section-header" onclick="toggleSection('sec-transit')">
-          <span class="section-label">Transit</span>
-          <span class="section-caret">▾</span>
-        </div>
+        <div class="section-header" onclick="toggleSection('sec-transit')"><span class="section-label">Transit</span><span class="section-caret">▾</span></div>
         <div class="section-body" id="transit-layers"></div>
       </div>
       <div class="section collapsed" id="sec-buildings">
-        <div class="section-header" onclick="toggleSection('sec-buildings')">
-          <span class="section-label">Buildings</span>
-          <span class="section-caret">▾</span>
-        </div>
+        <div class="section-header" onclick="toggleSection('sec-buildings')"><span class="section-label">Buildings</span><span class="section-caret">▾</span></div>
         <div class="section-body" id="building-layers"></div>
       </div>
       <div class="section collapsed" id="sec-natural">
-        <div class="section-header" onclick="toggleSection('sec-natural')">
-          <span class="section-label">Natural</span>
-          <span class="section-caret">▾</span>
-        </div>
+        <div class="section-header" onclick="toggleSection('sec-natural')"><span class="section-label">Natural</span><span class="section-caret">▾</span></div>
         <div class="section-body" id="natural-layers"></div>
       </div>
     </div>
-    <!-- Mobile export buttons: visible in mid state; sidebar-bottom takes over in full -->
+    <!-- Mobile export buttons — shown inline in mid state, hidden in full (sidebar-bottom takes over) -->
     <div class="mobile-scroll-actions">
-      <div class="sidebar-bottom-row">
-        <button class="copy-btn" id="copy-btn-scroll" disabled>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-          Copy SVG
-        </button>
-        <button class="export-btn" id="export-btn-scroll" disabled>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Export
-        </button>
-      </div>
-    </div>
+            <div class="sidebar-bottom-row">
+              <button class="copy-btn" id="copy-btn-scroll" disabled>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy SVG
+              </button>
+              <button class="export-btn" id="export-btn-scroll" disabled>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+              </button>
+            </div>
+          </div>
     <div class="sidebar-bottom">
-      <div class="sidebar-bottom-row">
-        <button class="copy-btn" id="copy-btn" disabled>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-          Copy SVG
-        </button>
-        <button class="export-btn" id="export-btn" disabled>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Export
-        </button>
-      </div>
+        <div class="sidebar-bottom-row">
+            <button class="copy-btn" id="copy-btn" disabled>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy SVG
+            </button>
+            <button class="export-btn" id="export-btn" disabled>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export
+            </button>
+        </div>
     </div>
   </div>
 
@@ -782,10 +511,8 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
       <button class="zc-btn" id="zc-fill"><span class="zc-label">fill</span></button>
     </div>
   </div>
-
 </div>
 
-<!-- ── Export modal ─────────────────────────────────────────────── -->
 <div id="export-modal">
   <div class="modal-card">
     <div class="modal-title">Export</div>
@@ -812,560 +539,382 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 </div>
 
 <script>
+const BASE = 1000;
 
-// ── Constants ────────────────────────────────────────────────────
-const BASE     = 1000;
-const ZOOM_MAX = 14;
-const OVERPASS = [
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-];
-
-// ── Style presets ────────────────────────────────────────────────
 const PRESETS = [
-  { name: 'Dark', dot: '#2a2620', bg: '#0c0c0d',
-    layers: { path:'#252420', residential:'#38352e', tertiary:'#524e44', secondary:'#6e6a5a', primary:'#a09070', motorway:'#c8a96e', railway:'#8a8070', aeroway:'#5a6070', building:'#1e1c18', pier:'#3a3428', green:'#161e14', water:'#162030', waterway:'#20304a' } },
-  { name: 'Sepia', dot: '#c8a878', bg: '#f0e8d8',
-    layers: { path:'#c8baa0', residential:'#b8a880', tertiary:'#9a8060', secondary:'#7a5c3c', primary:'#5a3c1c', motorway:'#3a2008', railway:'#886050', aeroway:'#6a7060', building:'#d8c8a0', pier:'#a89060', green:'#b8c890', water:'#8aabcc', waterway:'#6888aa' } },
-  { name: 'Mono', dot: '#888888', bg: '#ffffff',
-    layers: { path:'#e0e0e0', residential:'#c8c8c8', tertiary:'#a8a8a8', secondary:'#888888', primary:'#505050', motorway:'#202020', railway:'#606060', aeroway:'#707070', building:'#e8e8e8', pier:'#909090', green:'#ececec', water:'#d0d8e0', waterway:'#b0bcc8' } },
-  { name: 'Inverse', dot: '#c0c0c0', bg: '#080808',
-    layers: { path:'#303030', residential:'#404040', tertiary:'#545454', secondary:'#686868', primary:'#909090', motorway:'#e0e0e0', railway:'#909090', aeroway:'#686868', building:'#181818', pier:'#383838', green:'#101010', water:'#1e1e1e', waterway:'#2a2a2a' } },
-  { name: 'Blueprint', dot: '#1e5090', bg: '#0d1b2a',
-    layers: { path:'#112240', residential:'#162e50', tertiary:'#1a3a60', secondary:'#204878', primary:'#3a7ab0', motorway:'#6ab0d8', railway:'#4a8ab8', aeroway:'#406080', building:'#1e3a5a', pier:'#2a4a6a', green:'#0a2030', water:'#0a1a30', waterway:'#183860' } },
-  { name: 'Neon', dot: '#00ffc8', bg: '#0a0012',
-    layers: { path:'#3a0060', residential:'#480078', tertiary:'#580090', secondary:'#6800b0', primary:'#00c8a0', motorway:'#00ffc8', railway:'#d000d0', aeroway:'#0088d0', building:'#180030', pier:'#200040', green:'#160024', water:'#08001a', waterway:'#1000a0' } },
+  { name:'Dark',    dot:'#2a2620', bg:'#0c0c0d',
+    layers:{path:'#252420',residential:'#38352e',tertiary:'#524e44',secondary:'#6e6a5a',primary:'#a09070',motorway:'#c8a96e',railway:'#8a8070',aeroway:'#5a6070',building:'#1e1c18',pier:'#3a3428',green:'#161e14',water:'#162030',waterway:'#20304a'}},
+  { name:'Sepia',   dot:'#c8a878', bg:'#f0e8d8',
+    layers:{path:'#c8baa0',residential:'#b8a880',tertiary:'#9a8060',secondary:'#7a5c3c',primary:'#5a3c1c',motorway:'#3a2008',railway:'#886050',aeroway:'#6a7060',building:'#d8c8a0',pier:'#a89060',green:'#b8c890',water:'#8aabcc',waterway:'#6888aa'}},
+  { name:'Mono',    dot:'#888888', bg:'#ffffff',
+    layers:{path:'#e0e0e0',residential:'#c8c8c8',tertiary:'#a8a8a8',secondary:'#888888',primary:'#505050',motorway:'#202020',railway:'#606060',aeroway:'#707070',building:'#e8e8e8',pier:'#909090',green:'#ececec',water:'#d0d8e0',waterway:'#b0bcc8'}},
+  { name:'Inverse', dot:'#c0c0c0', bg:'#080808',
+    layers:{path:'#303030',residential:'#404040',tertiary:'#545454',secondary:'#686868',primary:'#909090',motorway:'#e0e0e0',railway:'#909090',aeroway:'#686868',building:'#181818',pier:'#383838',green:'#101010',water:'#1e1e1e',waterway:'#2a2a2a'}},
+  { name:'Blueprint', dot:'#1e5090', bg:'#0d1b2a',
+    layers:{path:'#112240',residential:'#162e50',tertiary:'#1a3a60',secondary:'#204878',primary:'#3a7ab0',motorway:'#6ab0d8',railway:'#4a8ab8',aeroway:'#406080',building:'#1e3a5a',pier:'#2a4a6a',green:'#0a2030',water:'#0a1a30',waterway:'#183860'}},
+  { name:'Neon',    dot:'#00ffc8', bg:'#0a0012',
+    layers:{path:'#3a0060',residential:'#480078',tertiary:'#580090',secondary:'#6800b0',primary:'#00c8a0',motorway:'#00ffc8',railway:'#d000d0',aeroway:'#0088d0',building:'#180030',pier:'#200040',green:'#160024',water:'#08001a',waterway:'#1000a0'}},
 ];
 
-// ── Layer definitions ────────────────────────────────────────────
-const BASE_LAYERS = [
-  { key:'path',        label:'Paths',         on:true,  color:'#252420', width:0.2, osm:['footway','path','track','cycleway','steps','pedestrian','service'], group:'roads' },
-  { key:'residential', label:'Residential',   on:true,  color:'#38352e', width:0.4, osm:['residential','living_street','unclassified'], group:'roads' },
-  { key:'tertiary',    label:'Tertiary',      on:true,  color:'#524e44', width:0.6, osm:['tertiary','tertiary_link'], group:'roads' },
-  { key:'secondary',   label:'Secondary',     on:true,  color:'#6e6a5a', width:0.8, osm:['secondary','secondary_link'], group:'roads' },
-  { key:'primary',     label:'Primary',       on:true,  color:'#a09070', width:1.0, osm:['primary','primary_link'], group:'roads' },
-  { key:'motorway',    label:'Motorway',      on:true,  color:'#c8a96e', width:1.2, osm:['motorway','motorway_link','trunk','trunk_link'], group:'roads' },
-  { key:'railway',     label:'Railway',       on:true,  color:'#8a8070', width:0.4, osm:['rail','subway','light_rail','tram','monorail'], group:'transit', dash:'5,4' },
-  { key:'aeroway',     label:'Aeroway',       on:true,  color:'#5a6070', width:0.4, osm:['runway','taxiway'], group:'transit' },
-  { key:'building',    label:'Buildings',     on:false, color:'#1e1c18', width:0,   fill:true,  group:'buildings' },
-  { key:'pier',        label:'Piers / docks', on:false, color:'#3a3428', width:0.4, fill:false, group:'buildings' },
-  { key:'green',       label:'Green space',   on:false, color:'#161e14', width:0,   fill:true,  group:'natural' },
-  { key:'water',       label:'Water bodies',  on:false, color:'#162030', width:0,   fill:true,  group:'natural' },
-  { key:'waterway',    label:'Waterways',     on:false, color:'#20304a', width:0.2, fill:false, group:'natural' },
+const BASE_LAYERS=[
+  {key:'path',        label:'Paths',         on:true,  color:'#252420',width:0.2,osm:['footway','path','track','cycleway','steps','pedestrian','service'],group:'roads'},
+  {key:'residential', label:'Residential',   on:true,  color:'#38352e',width:0.4,osm:['residential','living_street','unclassified'],group:'roads'},
+  {key:'tertiary',    label:'Tertiary',      on:true,  color:'#524e44',width:0.6,osm:['tertiary','tertiary_link'],group:'roads'},
+  {key:'secondary',   label:'Secondary',     on:true,  color:'#6e6a5a',width:0.8,osm:['secondary','secondary_link'],group:'roads'},
+  {key:'primary',     label:'Primary',       on:true,  color:'#a09070',width:1.0,osm:['primary','primary_link'],group:'roads'},
+  {key:'motorway',    label:'Motorway',      on:true,  color:'#c8a96e',width:1.2,osm:['motorway','motorway_link','trunk','trunk_link'],group:'roads'},
+  {key:'railway',     label:'Railway',       on:true,  color:'#8a8070',width:0.4,osm:['rail','subway','light_rail','tram','monorail'],group:'transit',dash:'5,4'},
+  {key:'aeroway',     label:'Aeroway',       on:true,  color:'#5a6070',width:0.4,osm:['runway','taxiway'],group:'transit'},
+  {key:'building',    label:'Buildings',     on:false, color:'#1e1c18',width:0,  fill:true, group:'buildings'},
+  {key:'pier',        label:'Piers / docks', on:false, color:'#3a3428',width:0.4,fill:false,group:'buildings'},
+  {key:'green',       label:'Green space',   on:false, color:'#161e14',width:0,  fill:true, group:'natural'},
+  {key:'water',       label:'Water bodies',  on:false, color:'#162030',width:0,  fill:true, group:'natural'},
+  {key:'waterway',    label:'Waterways',     on:false, color:'#20304a',width:0.2,fill:false,group:'natural'},
 ];
 
-// ── App state ────────────────────────────────────────────────────
-const S = { city:'', lat:0, lon:0, radius:4000, strokeScale:1.6, bgColor:'#0c0c0d', layers:BASE_LAYERS.map(l=>({...l})) };
-let cache = null, exportFormat = 'svg', activePreset = 0;
+const S={city:'',lat:0,lon:0,radius:4000,strokeScale:1.6,bgColor:'#0c0c0d',layers:BASE_LAYERS.map(l=>({...l}))};
+let cache=null, exportFormat='svg', activePreset=0;
+const OVERPASS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
 
-// ── Zoom / pan ───────────────────────────────────────────────────
-// viewMode 'fit':  min zoom = SVG fills canvas height (letterboxed on wide screens)
-// viewMode 'fill': min zoom = SVG fills canvas width (always 1.0 since SVG side = max(w,h))
-let zoom = 1, panX = 0, panY = 0;
-let isPanning = false, panStart = { x:0, y:0 };
-let viewMode = 'fill';
+// ── Zoom / pan ────────────────────────────────────────────────────
+// viewMode: 'fit' | 'fill'
+// In fit mode:  min zoom = zoom where SVG height = canvas height
+// In fill mode: min zoom = zoom where SVG width  = canvas width
+// The current zoom is never allowed below the active mode's min.
+// +/- buttons temporarily go into a 'custom' sub-mode but still respect the active floor.
 
-function canvasRect() { return document.getElementById('canvas-area').getBoundingClientRect(); }
-function svgEl()      { return document.getElementById('map-svg'); }
-function svgSide()    { return svgEl().offsetWidth || 600; }
+let zoom=1, panX=0, panY=0;
+let isPanning=false, panStart={x:0,y:0};
+let viewMode='fill'; // default on load
+const ZOOM_MAX=14;
 
-function fitZoom()  { const r = canvasRect(); return Math.min(r.width, r.height) / Math.max(r.width, r.height); }
-function fillZoom() { return 1.0; }
-function minZoom()  { return viewMode === 'fit' ? fitZoom() : fillZoom(); }
+function canvasRect(){return document.getElementById('canvas-area').getBoundingClientRect();}
+function svgEl(){return document.getElementById('map-svg');}
 
-// Clamp pan to canvas bounds.
-// In fit mode on mobile, allow negative panY so the map can be top-aligned above the sheet.
-function clampPan() {
-  const r        = canvasRect();
-  const rendered = Math.max(r.width, r.height) * zoom;
-  const maxX     = Math.max(0, (rendered - r.width)  / 2);
-  let   maxY     = Math.max(0, (rendered - r.height) / 2);
-  let   minY     = -maxY;
-  if (viewMode === 'fit' && window.innerWidth <= 640) {
-    const gap = Math.max(0, (r.height - rendered) / 2);
-    minY = -gap;
-    maxY = 0;
+// The SVG has a fixed pixel size set by sizeMapSVG (always square, side = max(cW,cH))
+// We use that pixel size + zoom to get rendered dimensions
+function svgSide(){return svgEl().offsetWidth||600;}
+
+// Zoom at which SVG height fills canvas height exactly (some gray on sides for wide canvases)
+function fitZoom(){
+  const r=canvasRect();
+  const side=Math.max(r.width,r.height);
+  const smaller=Math.min(r.width,r.height);
+  return smaller/side;
+}
+function fillZoom(){
+  // fill = zoom so larger canvas dimension fills
+  // since side = max(w,h), this is always 1.0
+  return 1.0;
+}
+// Min zoom for current mode
+function minZoom(){return viewMode==='fit'?fitZoom():fillZoom();}
+
+// Clamp pan so the map edge never goes past the canvas edge.
+// Exception: in fit mode on mobile, allow a negative panY offset so the
+// map can be top-aligned (sitting above the sheet) rather than centered.
+function clampPan(){
+  const r=canvasRect();
+  const side=Math.max(r.width,r.height);
+  const rendered=side*zoom;
+  const maxX=Math.max(0,(rendered-r.width)/2);
+  let maxY=Math.max(0,(rendered-r.height)/2);
+  // In fit mode on mobile: the map is shorter than the canvas height.
+  // Allow panY to go negative by the centering gap so top-align works.
+  let minY=-maxY;
+  if(viewMode==='fit' && window.innerWidth<=640){
+    const gap=Math.max(0,(r.height-rendered)/2);
+    minY=-gap; // allow shifting up by the centering gap
+    maxY=0;    // but not down (map top stays at or above canvas top)
   }
-  panX = Math.max(-maxX, Math.min(maxX, panX));
-  panY = Math.max(minY,  Math.min(maxY, panY));
+  panX=Math.max(-maxX,Math.min(maxX,panX));
+  panY=Math.max(minY,Math.min(maxY,panY));
 }
 
-function applyTransform(animated = false) {
-  zoom = Math.max(zoom, minZoom());
+function applyTransform(animated=false){
+  zoom=Math.max(zoom,minZoom());
   clampPan();
-  const el = document.getElementById('pan-layer');
-  if (animated) {
-    el.style.transition = 'transform .28s cubic-bezier(.25,.46,.45,.94)';
-    setTimeout(() => { el.style.transition = ''; }, 300);
+  const el=document.getElementById('pan-layer');
+  if(animated){
+    el.style.transition='transform .28s cubic-bezier(.25,.46,.45,.94)';
+    setTimeout(()=>{el.style.transition='';},300);
   } else {
-    el.style.transition = '';
+    el.style.transition='';
   }
-  el.style.transform = `translate(${panX}px,${panY}px) scale(${zoom})`;
+  el.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;
 }
 
-function setMode(mode, animated = true) {
-  viewMode = mode;
-  zoom     = minZoom();
-  panX     = 0;
-  // On mobile in fit mode, top-align the map so it sits fully above the sheet
-  if (mode === 'fit' && window.innerWidth <= 640) {
-    const r    = canvasRect();
-    const side = Math.max(r.width, r.height);
-    panY = -Math.max(0, (r.height - side * zoom) / 2);
+function setMode(mode,animated=true){
+  viewMode=mode;
+  zoom=minZoom();
+  panX=0;
+  // On mobile in fit mode, top-align the map so the full square sits
+  // above the sheet rather than centering behind it.
+  if(mode==='fit' && window.innerWidth<=640){
+    const r=canvasRect();
+    const side=Math.max(r.width,r.height);
+    const renderedH=side*zoom; // height of map at fitZoom
+    // pan-layer centers by default; shift up so map top = canvas top
+    panY=-Math.max(0,(r.height-renderedH)/2);
   } else {
-    panY = 0;
+    panY=0;
   }
   applyTransform(animated);
-  document.getElementById('zc-fit').classList.toggle('active',  mode === 'fit');
-  document.getElementById('zc-fill').classList.toggle('active', mode === 'fill');
+  document.getElementById('zc-fit').classList.toggle('active',mode==='fit');
+  document.getElementById('zc-fill').classList.toggle('active',mode==='fill');
 }
 
-// Zoom control buttons
-document.getElementById('zc-fit').addEventListener('click',  () => setMode('fit'));
-document.getElementById('zc-fill').addEventListener('click', () => setMode('fill'));
-document.getElementById('zc-in').addEventListener('click',   () => { zoom = Math.min(zoom * 1.5, ZOOM_MAX); applyTransform(true); });
-document.getElementById('zc-out').addEventListener('click',  () => { zoom = Math.max(zoom / 1.5, minZoom()); applyTransform(true); });
+document.getElementById('zc-fit').addEventListener('click', ()=>setMode('fit'));
+document.getElementById('zc-fill').addEventListener('click', ()=>setMode('fill'));
 
-// Wheel zoom toward cursor
-const ca = document.getElementById('canvas-area');
-ca.addEventListener('wheel', e => {
+document.getElementById('zc-in').addEventListener('click', ()=>{
+  zoom=Math.min(zoom*1.5, ZOOM_MAX);
+  applyTransform(true);
+});
+document.getElementById('zc-out').addEventListener('click', ()=>{
+  zoom=Math.max(zoom/1.5, minZoom());
+  applyTransform(true);
+});
+
+// Wheel: always zoom toward cursor
+const ca=document.getElementById('canvas-area');
+ca.addEventListener('wheel', e=>{
   e.preventDefault();
-  const r      = ca.getBoundingClientRect();
-  const mx     = e.clientX - r.left - r.width  / 2;
-  const my     = e.clientY - r.top  - r.height / 2;
-  const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
-  const newZoom = Math.min(Math.max(zoom * factor, minZoom()), ZOOM_MAX);
-  if (newZoom !== zoom) {
-    panX = mx + (panX - mx) * (newZoom / zoom);
-    panY = my + (panY - my) * (newZoom / zoom);
-    zoom = newZoom;
+  const r=ca.getBoundingClientRect();
+  const mx=e.clientX-r.left-r.width/2, my=e.clientY-r.top-r.height/2;
+  const factor=e.deltaY<0?1.1:1/1.1;
+  const newZoom=Math.min(Math.max(zoom*factor, minZoom()), ZOOM_MAX);
+  if(newZoom!==zoom){
+    panX=mx+(panX-mx)*(newZoom/zoom);
+    panY=my+(panY-my)*(newZoom/zoom);
+    zoom=newZoom;
   }
   applyTransform();
-}, { passive: false });
+},{passive:false});
 
-// Mouse drag pan
-ca.addEventListener('mousedown', e => {
-  if (e.button !== 0) return;
-  isPanning = true;
-  panStart  = { x: e.clientX - panX, y: e.clientY - panY };
+// Click-drag pan — always available (clamping handles bounds)
+ca.addEventListener('mousedown', e=>{
+  if(e.button!==0)return;
+  isPanning=true;
+  panStart={x:e.clientX-panX, y:e.clientY-panY};
   ca.classList.add('panning');
 });
-window.addEventListener('mousemove', e => {
-  if (!isPanning) return;
-  panX = e.clientX - panStart.x;
-  panY = e.clientY - panStart.y;
+window.addEventListener('mousemove', e=>{
+  if(!isPanning)return;
+  panX=e.clientX-panStart.x;
+  panY=e.clientY-panStart.y;
   applyTransform();
 });
-window.addEventListener('mouseup', () => { isPanning = false; ca.classList.remove('panning'); });
+window.addEventListener('mouseup', ()=>{isPanning=false; ca.classList.remove('panning');});
 
-// Touch pan and pinch-zoom
-let lastTouchDist = null;
-ca.addEventListener('touchstart', e => {
-  if (e.touches.length === 1) {
-    isPanning    = true;
-    panStart     = { x: e.touches[0].clientX - panX, y: e.touches[0].clientY - panY };
-    lastTouchDist = null;
-  } else if (e.touches.length === 2) {
-    isPanning     = false;
-    lastTouchDist = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
-  }
-}, { passive: true });
-ca.addEventListener('touchmove', e => {
-  if (e.touches.length === 1 && isPanning) {
-    panX = e.touches[0].clientX - panStart.x;
-    panY = e.touches[0].clientY - panStart.y;
-    applyTransform();
-  } else if (e.touches.length === 2 && lastTouchDist) {
-    const d = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
-    zoom = Math.min(Math.max(zoom * (d / lastTouchDist), minZoom()), ZOOM_MAX);
-    lastTouchDist = d;
-    applyTransform();
-  }
-}, { passive: true });
-ca.addEventListener('touchend', () => { isPanning = false; lastTouchDist = null; });
+// Touch
+let lastTd=null;
+ca.addEventListener('touchstart', e=>{
+  if(e.touches.length===1){isPanning=true;panStart={x:e.touches[0].clientX-panX,y:e.touches[0].clientY-panY};lastTd=null;}
+  else if(e.touches.length===2){isPanning=false;lastTd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}
+},{passive:true});
+ca.addEventListener('touchmove', e=>{
+  if(e.touches.length===1&&isPanning){panX=e.touches[0].clientX-panStart.x;panY=e.touches[0].clientY-panStart.y;applyTransform();}
+  else if(e.touches.length===2&&lastTd){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);zoom=Math.min(Math.max(zoom*(d/lastTd),minZoom()),ZOOM_MAX);lastTd=d;applyTransform();}
+},{passive:true});
+ca.addEventListener('touchend',()=>{isPanning=false;lastTd=null;});
 
-// ── Utilities ────────────────────────────────────────────────────
-const tipEl = document.getElementById('tooltip');
-function showTip(el, text) {
-  tipEl.textContent = text;
-  tipEl.classList.add('show');
-  const r = el.getBoundingClientRect();
-  requestAnimationFrame(() => {
-    tipEl.style.left = (r.left + r.width / 2 - tipEl.offsetWidth / 2) + 'px';
-    tipEl.style.top  = (r.top - tipEl.offsetHeight - 6) + 'px';
+// ── Utilities ─────────────────────────────────────────────────────
+const tipEl=document.getElementById('tooltip');
+function showTip(el,text){
+  tipEl.textContent=text; tipEl.classList.add('show');
+  const r=el.getBoundingClientRect();
+  requestAnimationFrame(()=>{
+    tipEl.style.left=(r.left+r.width/2-tipEl.offsetWidth/2)+'px';
+    tipEl.style.top=(r.top-tipEl.offsetHeight-6)+'px';
   });
 }
-function hideTip() { tipEl.classList.remove('show'); }
+function hideTip(){tipEl.classList.remove('show');}
 
 let toastTimer;
-function toast(msg, err = false) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className   = 'show' + (err ? ' error' : '');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.className = ''; }, 3500);
-}
-function setOverlay(label, sub = '') {
-  document.getElementById('overlay').classList.remove('hidden');
-  document.getElementById('overlay-label').textContent = label;
-  document.getElementById('overlay-sub').textContent   = sub;
-}
-function hideOverlay()     { document.getElementById('overlay').classList.add('hidden'); }
-function showCanvasError(msg) {
-  document.getElementById('canvas-error-msg').textContent = msg;
-  document.getElementById('canvas-error').classList.add('show');
-}
-function hideCanvasError() { document.getElementById('canvas-error').classList.remove('show'); }
-function toggleSection(id) { document.getElementById(id).classList.toggle('collapsed'); }
+function toast(msg,err=false){const el=document.getElementById('toast');el.textContent=msg;el.className='show'+(err?' error':'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.className='',3500);}
+function setOverlay(label,sub=''){document.getElementById('overlay').classList.remove('hidden');document.getElementById('overlay-label').textContent=label;document.getElementById('overlay-sub').textContent=sub;}
+function hideOverlay(){document.getElementById('overlay').classList.add('hidden');}
+function showCanvasError(msg){document.getElementById('canvas-error-msg').textContent=msg;document.getElementById('canvas-error').classList.add('show');}
+function hideCanvasError(){document.getElementById('canvas-error').classList.remove('show');}
+function toggleSection(id){document.getElementById(id).classList.toggle('collapsed');}
 
-// ── Radius picker ────────────────────────────────────────────────
-let usingCustom = false;
-document.querySelectorAll('.radius-pill').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.radius-pill').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    S.radius      = parseInt(btn.dataset.r);
-    S.strokeScale = parseFloat(btn.dataset.scale) || 1.0;
-  });
-});
-document.getElementById('custom-toggle').addEventListener('click', () => {
-  usingCustom = !usingCustom;
-  document.getElementById('radius-pills').style.display = usingCustom ? 'none' : 'flex';
-  document.getElementById('custom-wrap').classList.toggle('show', usingCustom);
-  document.getElementById('custom-toggle').textContent = usingCustom ? 'Presets' : 'Custom';
-  if (usingCustom) {
-    S.radius      = parseInt(document.getElementById('custom-radius').value) || 4000;
-    S.strokeScale = 1.0;
-  }
-});
-document.getElementById('custom-radius').addEventListener('input', e => {
-  const v       = parseInt(e.target.value) || 4000;
-  S.radius      = v;
-  S.strokeScale = 1.0;
-  document.getElementById('custom-warning').classList.toggle('show', v > 20000);
-});
+// ── Radius ────────────────────────────────────────────────────────
+let usingCustom=false;
+document.querySelectorAll('.radius-pill').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.radius-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');S.radius=parseInt(btn.dataset.r);S.strokeScale=parseFloat(btn.dataset.scale)||1.0;});});
+document.getElementById('custom-toggle').addEventListener('click',()=>{usingCustom=!usingCustom;document.getElementById('radius-pills').style.display=usingCustom?'none':'flex';document.getElementById('custom-wrap').classList.toggle('show',usingCustom);document.getElementById('custom-toggle').textContent=usingCustom?'Presets':'Custom';if(usingCustom){S.radius=parseInt(document.getElementById('custom-radius').value)||4000;S.strokeScale=1.0;}});
+document.getElementById('custom-radius').addEventListener('input',e=>{const v=parseInt(e.target.value)||4000;S.radius=v;S.strokeScale=1.0;document.getElementById('custom-warning').classList.toggle('show',v>20000);});
 
-// ── Presets ──────────────────────────────────────────────────────
-function applyPreset(idx) {
-  activePreset = idx;
-  const p      = PRESETS[idx];
-  S.bgColor    = p.bg;
-  document.getElementById('bg-color').value       = p.bg;
-  document.getElementById('bg-swatch').style.background = p.bg;
-  ca.style.background = p.bg;
-  S.layers.forEach(layer => {
-    const c = p.layers[layer.key];
-    if (!c) return;
-    layer.color = c;
-    const col = document.getElementById('col-' + layer.key);
-    const sw  = document.getElementById('sw-'  + layer.key);
-    const lp  = document.getElementById('lp-'  + layer.key);
-    if (col) col.value = c;
-    if (sw)  sw.style.background = c;
-    if (lp)  lp.style.background = c;
+// ── Presets ───────────────────────────────────────────────────────
+function applyPreset(idx){
+  activePreset=idx;const p=PRESETS[idx];
+  S.bgColor=p.bg;
+  document.getElementById('bg-color').value=p.bg;
+  document.getElementById('bg-swatch').style.background=p.bg;
+  ca.style.background=p.bg;
+  S.layers.forEach(layer=>{
+    const c=p.layers[layer.key];if(!c)return;
+    layer.color=c;
+    const col=document.getElementById('col-'+layer.key),sw=document.getElementById('sw-'+layer.key),lp=document.getElementById('lp-'+layer.key);
+    if(col)col.value=c;if(sw)sw.style.background=c;if(lp)lp.style.background=c;
   });
-  document.querySelectorAll('.preset-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+  document.querySelectorAll('.preset-dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
   restyle();
 }
-function buildPresets() {
-  const container = document.getElementById('presets-swatches');
-  container.innerHTML = '';
-  PRESETS.forEach((p, i) => {
-    const dot = document.createElement('div');
-    dot.className      = 'preset-dot' + (i === activePreset ? ' active' : '');
-    dot.style.background = p.dot;
-    dot.addEventListener('click',      () => applyPreset(i));
-    dot.addEventListener('mouseenter', () => showTip(dot, p.name));
-    dot.addEventListener('mouseleave', hideTip);
+function buildPresets(){
+  const container=document.getElementById('presets-swatches');
+  container.innerHTML='';
+  PRESETS.forEach((p,i)=>{
+    const dot=document.createElement('div');
+    dot.className='preset-dot'+(i===activePreset?' active':'');
+    dot.style.background=p.dot;
+    dot.addEventListener('click',()=>applyPreset(i));
+    dot.addEventListener('mouseenter',()=>showTip(dot,p.name));
+    dot.addEventListener('mouseleave',hideTip);
     container.appendChild(dot);
   });
 }
 
-// ── Layer UI ─────────────────────────────────────────────────────
-function buildLayerUI(layer) {
-  const div       = document.createElement('div');
-  div.className   = 'layer-row' + (layer.on ? '' : ' off');
-  div.id          = 'lr-' + layer.key;
-  const previewH  = layer.fill ? 7 : Math.max(2, Math.min(layer.width * 2.5, 5));
-  const previewBR = layer.fill ? '2px' : '1px';
-  const weightHTML = !layer.fill
-    ? `<div class="weight-row" id="wr-${layer.key}" style="${layer.on ? '' : 'display:none'}">
-         <input type="range"  id="w-${layer.key}"  min="0.1" max="6" step="0.1" value="${layer.width}"/>
-         <input type="number" class="weight-num" id="wn-${layer.key}" min="0.1" max="6" step="0.1" value="${layer.width.toFixed(1)}"/>
-       </div>`
-    : '';
-  div.innerHTML =
-    `<div class="layer-top">
-       <div class="line-preview" id="lp-${layer.key}" style="background:${layer.color};height:${previewH}px;border-radius:${previewBR}"></div>
-       <span class="layer-name">${layer.label}</span>
-       <label class="toggle">
-         <input type="checkbox" id="tog-${layer.key}" ${layer.on ? 'checked' : ''}/>
-         <div class="toggle-track"></div>
-         <div class="toggle-thumb"></div>
-       </label>
-       <div class="swatch" id="sw-${layer.key}" style="background:${layer.color}">
-         <input type="color" id="col-${layer.key}" value="${layer.color}"/>
-       </div>
-     </div>${weightHTML}`;
+// ── Layer UI ──────────────────────────────────────────────────────
+function buildLayerUI(layer){
+  const div=document.createElement('div');
+  div.className='layer-row'+(layer.on?'':' off');div.id='lr-'+layer.key;
+  const pH=layer.fill?7:Math.max(2,Math.min(layer.width*2.5,5)),pBR=layer.fill?'2px':'1px';
+  const wHTML=!layer.fill?`<div class="weight-row" id="wr-${layer.key}" style="${layer.on?'':'display:none'}"><input type="range" id="w-${layer.key}" min="0.1" max="6" step="0.1" value="${layer.width}"/><input type="number" class="weight-num" id="wn-${layer.key}" min="0.1" max="6" step="0.1" value="${layer.width.toFixed(1)}"/></div>`:'';
+  div.innerHTML=`<div class="layer-top"><div class="line-preview" id="lp-${layer.key}" style="background:${layer.color};height:${pH}px;border-radius:${pBR}"></div><span class="layer-name">${layer.label}</span><label class="toggle"><input type="checkbox" id="tog-${layer.key}" ${layer.on?'checked':''}/><div class="toggle-track"></div><div class="toggle-thumb"></div></label><div class="swatch" id="sw-${layer.key}" style="background:${layer.color}"><input type="color" id="col-${layer.key}" value="${layer.color}"/></div></div>${wHTML}`;
   return div;
 }
-function attachLayerEvents(layer) {
-  const tog = document.getElementById('tog-' + layer.key);
-  const col = document.getElementById('col-' + layer.key);
-  const sw  = document.getElementById('sw-'  + layer.key);
-  const lp  = document.getElementById('lp-'  + layer.key);
-  const lr  = document.getElementById('lr-'  + layer.key);
-  const wr  = document.getElementById('wr-'  + layer.key);
-  const wsl = document.getElementById('w-'   + layer.key);
-  const wnu = document.getElementById('wn-'  + layer.key);
-  function setW(v) {
-    v           = Math.max(0.1, Math.min(6, parseFloat(v) || 0.1));
-    layer.width = v;
-    if (wsl) wsl.value = v;
-    if (wnu) wnu.value = v.toFixed(1);
-    if (lp)  lp.style.height = Math.max(2, Math.min(v * 2.5, 5)) + 'px';
-    restyle();
-  }
-  tog.addEventListener('change', () => {
-    layer.on = tog.checked;
-    lr.classList.toggle('off', !layer.on);
-    if (wr) wr.style.display = layer.on ? '' : 'none';
-    restyle();
-  });
-  col.addEventListener('input', () => {
-    layer.color        = col.value;
-    sw.style.background = col.value;
-    lp.style.background = col.value;
-    restyle();
-  });
-  if (wsl) wsl.addEventListener('input', () => setW(wsl.value));
-  if (wnu) {
-    wnu.addEventListener('input', () => setW(wnu.value));
-    wnu.addEventListener('blur',  () => { wnu.value = layer.width.toFixed(1); });
-  }
+function attachLayerEvents(layer){
+  const tog=document.getElementById('tog-'+layer.key),col=document.getElementById('col-'+layer.key),sw=document.getElementById('sw-'+layer.key),lp=document.getElementById('lp-'+layer.key),lr=document.getElementById('lr-'+layer.key),wr=document.getElementById('wr-'+layer.key),wsl=document.getElementById('w-'+layer.key),wnu=document.getElementById('wn-'+layer.key);
+  function setW(v){v=Math.max(0.1,Math.min(6,parseFloat(v)||0.1));layer.width=v;if(wsl)wsl.value=v;if(wnu)wnu.value=v.toFixed(1);if(lp)lp.style.height=Math.max(2,Math.min(v*2.5,5))+'px';restyle();}
+  tog.addEventListener('change',()=>{layer.on=tog.checked;lr.classList.toggle('off',!layer.on);if(wr)wr.style.display=layer.on?'':'none';restyle();});
+  col.addEventListener('input',()=>{layer.color=col.value;sw.style.background=col.value;lp.style.background=col.value;restyle();});
+  if(wsl)wsl.addEventListener('input',()=>setW(wsl.value));
+  if(wnu){wnu.addEventListener('input',()=>setW(wnu.value));wnu.addEventListener('blur',()=>{wnu.value=layer.width.toFixed(1);});}
 }
-function buildAllLayers() {
-  const groups = { roads:'road-layers', transit:'transit-layers', natural:'natural-layers', buildings:'building-layers' };
-  Object.values(groups).forEach(id => { document.getElementById(id).innerHTML = ''; });
-  [...S.layers.filter(l => l.group === 'roads')].reverse().forEach(l => {
-    document.getElementById('road-layers').appendChild(buildLayerUI(l));
-    attachLayerEvents(l);
-  });
-  S.layers.filter(l => l.group !== 'roads').forEach(l => {
-    const c = document.getElementById(groups[l.group]);
-    if (!c) return;
-    c.appendChild(buildLayerUI(l));
-    attachLayerEvents(l);
-  });
+function buildAllLayers(){
+  const groups={roads:'road-layers',transit:'transit-layers',natural:'natural-layers',buildings:'building-layers'};
+  Object.values(groups).forEach(id=>document.getElementById(id).innerHTML='');
+  [...S.layers.filter(l=>l.group==='roads')].reverse().forEach(l=>{document.getElementById('road-layers').appendChild(buildLayerUI(l));attachLayerEvents(l);});
+  S.layers.filter(l=>l.group!=='roads').forEach(l=>{const c=document.getElementById(groups[l.group]);if(!c)return;c.appendChild(buildLayerUI(l));attachLayerEvents(l);});
 }
-document.getElementById('bg-color').addEventListener('input', e => {
-  S.bgColor = e.target.value;
-  document.getElementById('bg-swatch').style.background = e.target.value;
-  ca.style.background = e.target.value;
-  restyle();
-});
+document.getElementById('bg-color').addEventListener('input',e=>{S.bgColor=e.target.value;document.getElementById('bg-swatch').style.background=e.target.value;ca.style.background=e.target.value;restyle();});
 
-// ── Overpass API ─────────────────────────────────────────────────
-function radiusToBbox(lat, lon, r) {
-  const lD = r / 111320;
-  const oD = r / (111320 * Math.cos(lat * Math.PI / 180));
-  return { south: lat - lD, north: lat + lD, west: lon - oD, east: lon + oD };
-}
-async function queryOverpass(query) {
-  const body = 'data=' + encodeURIComponent(query);
-  for (let i = 0; i < OVERPASS.length; i++) {
-    if (i > 0) setOverlay('Trying backup server…', 'overpass.kumi.systems');
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const r = await fetch(OVERPASS[i], { method:'POST', body, signal:AbortSignal.timeout(30000) });
-        if (r.status === 504) {
-          if (attempt === 0) { await new Promise(res => setTimeout(res, 2500)); continue; }
-          throw new Error('HTTP 504');
-        }
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        const t = await r.text();
-        if (!t.trim().startsWith('{')) throw new Error('Non-JSON');
+// ── Overpass ──────────────────────────────────────────────────────
+function radiusToBbox(lat,lon,r){const lD=r/111320,oD=r/(111320*Math.cos(lat*Math.PI/180));return{south:lat-lD,north:lat+lD,west:lon-oD,east:lon+oD};}
+async function queryOverpass(query){
+  const body='data='+encodeURIComponent(query);
+  for(let i=0;i<OVERPASS.length;i++){
+    if(i>0)setOverlay('Trying backup server…','overpass.kumi.systems');
+    for(let attempt=0;attempt<2;attempt++){
+      try{
+        const r=await fetch(OVERPASS[i],{method:'POST',body,signal:AbortSignal.timeout(30000)});
+        if(r.status===504){if(attempt===0){await new Promise(res=>setTimeout(res,2500));continue;}throw new Error('HTTP 504');}
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        const t=await r.text();if(!t.trim().startsWith('{'))throw new Error('Non-JSON');
         return JSON.parse(t);
-      } catch(e) {
-        if (attempt === 0 && (e.message.includes('504') || e.message.includes('abort') || e.message.includes('timeout'))) {
-          await new Promise(res => setTimeout(res, 2500)); continue;
-        }
-        console.warn(OVERPASS[i], e.message); break;
-      }
+      }catch(e){if(attempt===0&&(e.message.includes('504')||e.message.includes('abort')||e.message.includes('timeout'))){await new Promise(res=>setTimeout(res,2500));continue;}console.warn(OVERPASS[i],e.message);break;}
     }
   }
   throw new Error('Servers unavailable — wait a moment and try again');
 }
 
-// ── Projection ───────────────────────────────────────────────────
-let _b = null;
-function makeBounds(bbox) {
-  const cos = Math.cos(((bbox.north + bbox.south) / 2) * Math.PI / 180);
-  _b = { minLat:bbox.south, maxLat:bbox.north, minLon:bbox.west, maxLon:bbox.east, cos };
-}
-function project(lat, lon) {
-  if (!_b) return { x: BASE / 2, y: BASE / 2 };
-  const PAD = BASE * 0.015;
-  const ls  = (_b.maxLon - _b.minLon) * _b.cos;
-  const ts  = _b.maxLat - _b.minLat;
-  if (!ls || !ts) return { x: BASE / 2, y: BASE / 2 };
-  const dz = BASE - PAD * 2;
-  const sc = dz / Math.max(ls, ts);
-  const ox = PAD + (dz - ls * sc) / 2;
-  const oy = PAD + (dz - ts * sc) / 2;
-  return { x: ox + (lon - _b.minLon) * _b.cos * sc, y: oy + (_b.maxLat - lat) * sc };
+// ── Projection ────────────────────────────────────────────────────
+let _b=null;
+function makeBounds(bbox){const cos=Math.cos(((bbox.north+bbox.south)/2)*Math.PI/180);_b={minLat:bbox.south,maxLat:bbox.north,minLon:bbox.west,maxLon:bbox.east,cos};}
+function project(lat,lon){
+  if(!_b)return{x:BASE/2,y:BASE/2};
+  const PAD=BASE*0.015,ls=(_b.maxLon-_b.minLon)*_b.cos,ts=_b.maxLat-_b.minLat;
+  if(!ls||!ts)return{x:BASE/2,y:BASE/2};
+  const dz=BASE-PAD*2,sc=dz/Math.max(ls,ts);
+  const ox=PAD+(dz-ls*sc)/2,oy=PAD+(dz-ts*sc)/2;
+  return{x:ox+(lon-_b.minLon)*_b.cos*sc,y:oy+(_b.maxLat-lat)*sc};
 }
 
-// ── Path helpers ─────────────────────────────────────────────────
-const MJ = BASE * 0.15;
-function projectNodes(nodes) {
-  const pts = [];
-  for (const n of nodes) {
-    const p = project(n.lat, n.lon);
-    if (pts.length) {
-      const pv = pts[pts.length - 1];
-      if (Math.hypot(p.x - pv.x, p.y - pv.y) > MJ) return null;
-    }
-    pts.push(p);
-  }
-  return pts;
-}
-function waysToStroke(ways) {
-  return ways.map(w => {
-    if (!w.rn || w.rn.length < 2) return '';
-    const pts = projectNodes(w.rn);
-    if (!pts) return '';
-    return 'M' + pts.map(p => p.x.toFixed(2) + ',' + p.y.toFixed(2)).join('L');
-  }).filter(Boolean).join(' ');
-}
-function waysToFill(ways) {
-  return ways.map(w => {
-    if (!w.rn || w.rn.length < 3) return '';
-    const pts = projectNodes(w.rn);
-    if (!pts || pts.length < 3) return '';
-    return 'M' + pts.map(p => p.x.toFixed(2) + ',' + p.y.toFixed(2)).join('L') + 'Z';
-  }).filter(Boolean).join(' ');
-}
-function stitchWays(ids, wni) {
-  const pool = ids.map(id => wni[id]).filter(ns => ns && ns.length >= 2).map(ns => [...ns]);
-  if (!pool.length) return [];
-  const res = [...pool.shift()];
-  let safety = pool.length * 3;
-  while (pool.length && safety-- > 0) {
-    const tail = res[res.length - 1], head = res[0];
-    let found = false;
-    for (let i = 0; i < pool.length; i++) {
-      const w = pool[i], ws = w[0], we = w[w.length - 1];
-      if (ws === tail) { res.push(...w.slice(1));                pool.splice(i,1); found=true; break; }
-      if (we === tail) { res.push(...[...w].reverse().slice(1)); pool.splice(i,1); found=true; break; }
-      if (ws === head) { res.unshift(...[...w].reverse().slice(1)); pool.splice(i,1); found=true; break; }
-      if (we === head) { res.unshift(...w.slice(0,-1));           pool.splice(i,1); found=true; break; }
-    }
-    if (!found) break;
-  }
-  return res;
-}
-function nodeIdsToFill(ids, nm) {
-  const ns = ids.map(id => nm[id]).filter(Boolean);
-  if (ns.length < 3) return '';
-  const pts = projectNodes(ns);
-  if (!pts || pts.length < 3) return '';
-  return 'M' + pts.map(p => p.x.toFixed(2) + ',' + p.y.toFixed(2)).join('L') + 'Z';
+// ── Path helpers ──────────────────────────────────────────────────
+const MJ=BASE*0.15;
+function projectNodes(nodes){const pts=[];for(const n of nodes){const p=project(n.lat,n.lon);if(pts.length){const pv=pts[pts.length-1],dx=p.x-pv.x,dy=p.y-pv.y;if(Math.sqrt(dx*dx+dy*dy)>MJ)return null;}pts.push(p);}return pts;}
+function waysToStroke(ways){return ways.map(w=>{if(!w.rn||w.rn.length<2)return'';const pts=projectNodes(w.rn);if(!pts)return'';return'M'+pts.map(p=>p.x.toFixed(2)+','+p.y.toFixed(2)).join('L');}).filter(Boolean).join(' ');}
+function waysToFill(ways){return ways.map(w=>{if(!w.rn||w.rn.length<3)return'';const pts=projectNodes(w.rn);if(!pts||pts.length<3)return'';return'M'+pts.map(p=>p.x.toFixed(2)+','+p.y.toFixed(2)).join('L')+'Z';}).filter(Boolean).join(' ');}
+function stitchWays(ids,wni){const pool=ids.map(id=>wni[id]).filter(ns=>ns&&ns.length>=2).map(ns=>[...ns]);if(!pool.length)return[];const res=[...pool.shift()];let safety=pool.length*3;while(pool.length&&safety-->0){const tail=res[res.length-1],head=res[0];let found=false;for(let i=0;i<pool.length;i++){const w=pool[i],ws=w[0],we=w[w.length-1];if(ws===tail){res.push(...w.slice(1));pool.splice(i,1);found=true;break;}if(we===tail){res.push(...[...w].reverse().slice(1));pool.splice(i,1);found=true;break;}if(ws===head){res.unshift(...[...w].reverse().slice(1));pool.splice(i,1);found=true;break;}if(we===head){res.unshift(...w.slice(0,-1));pool.splice(i,1);found=true;break;}}if(!found)break;}return res;}
+function nodeIdsToFill(ids,nm){const ns=ids.map(id=>nm[id]).filter(Boolean);if(ns.length<3)return'';const pts=projectNodes(ns);if(!pts||pts.length<3)return'';return'M'+pts.map(p=>p.x.toFixed(2)+','+p.y.toFixed(2)).join('L')+'Z';}
+
+// ── SVG sizing ────────────────────────────────────────────────────
+// SVG is always square. Its pixel side = max(canvasW, canvasH) so that
+// both fit and fill can be achieved purely through CSS transform scale.
+// fit zoom  = canvasH / svgSide  → SVG height fills canvas height
+// fill zoom = canvasW / svgSide  → SVG width fills canvas width
+function sizeMapSVG(){
+  const r=canvasRect();
+  // Always use the larger dimension so both fit and fill are achievable via scale
+  const side=Math.max(r.width,r.height);
+  svgEl().style.width =side+'px';
+  svgEl().style.height=side+'px';
 }
 
-// ── SVG sizing ───────────────────────────────────────────────────
-// SVG is always square with side = max(canvasW, canvasH).
-// This lets fit and fill both be achieved via CSS transform scale alone.
-function sizeMapSVG() {
-  const r    = canvasRect();
-  const side = Math.max(r.width, r.height);
-  svgEl().style.width  = side + 'px';
-  svgEl().style.height = side + 'px';
-}
-
-// ── Build SVG content ────────────────────────────────────────────
-function buildSVGContent() {
-  if (!cache) return '';
-  const { waterWayPolys, waterRelPaths, waterwayLines, greenPolys, buildingPolys, roadWays, railWays, aeroWays, pierLines } = cache;
-  const sc = S.strokeScale;
-  let g = '';
-  const greenL = S.layers.find(l => l.key === 'green');
-  if (greenL?.on) { const d = waysToFill(greenPolys); if (d) g += `<path d="${d}" fill="${greenL.color}" stroke="none" fill-opacity="0.9"/>`; }
-  const waterL = S.layers.find(l => l.key === 'water');
-  if (waterL?.on) {
-    const d1 = waysToFill(waterWayPolys);
-    if (d1) g += `<path d="${d1}" fill="${waterL.color}" stroke="none"/>`;
-    if (waterRelPaths.length) g += `<path d="${waterRelPaths.join(' ')}" fill="${waterL.color}" stroke="none"/>`;
-  }
-  const buildL = S.layers.find(l => l.key === 'building');
-  if (buildL?.on) { const d = waysToFill(buildingPolys); if (d) g += `<path d="${d}" fill="${buildL.color}" stroke="none" fill-opacity="0.8"/>`; }
-  ['path','residential','tertiary','secondary','primary','motorway'].forEach(key => {
-    const layer    = S.layers.find(l => l.key === key);
-    if (!layer?.on) return;
-    const matching = roadWays.filter(w => w.tags?.highway && layer.osm.includes(w.tags.highway));
-    if (!matching.length) return;
-    const d = waysToStroke(matching);
-    if (d) g += `<path d="${d}" fill="none" stroke="${layer.color}" stroke-width="${(layer.width*sc).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+// ── Build SVG content ─────────────────────────────────────────────
+function buildSVGContent(){
+  if(!cache)return'';
+  const{waterWayPolys,waterRelPaths,waterwayLines,greenPolys,buildingPolys,roadWays,railWays,aeroWays,pierLines}=cache;
+  const sc=S.strokeScale;let g='';
+  const greenL=S.layers.find(l=>l.key==='green');
+  if(greenL?.on){const d=waysToFill(greenPolys);if(d)g+=`<path d="${d}" fill="${greenL.color}" stroke="none" fill-opacity="0.9"/>`;}
+  const waterL=S.layers.find(l=>l.key==='water');
+  if(waterL?.on){const d1=waysToFill(waterWayPolys);if(d1)g+=`<path d="${d1}" fill="${waterL.color}" stroke="none"/>`;if(waterRelPaths.length)g+=`<path d="${waterRelPaths.join(' ')}" fill="${waterL.color}" stroke="none"/>`;}
+  const buildL=S.layers.find(l=>l.key==='building');
+  if(buildL?.on){const d=waysToFill(buildingPolys);if(d)g+=`<path d="${d}" fill="${buildL.color}" stroke="none" fill-opacity="0.8"/>`;}
+  ['path','residential','tertiary','secondary','primary','motorway'].forEach(key=>{
+    const layer=S.layers.find(l=>l.key===key);if(!layer?.on)return;
+    const matching=roadWays.filter(w=>w.tags?.highway&&layer.osm.includes(w.tags.highway));if(!matching.length)return;
+    const d=waysToStroke(matching);
+    if(d)g+=`<path d="${d}" fill="none" stroke="${layer.color}" stroke-width="${(layer.width*sc).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round"/>`;
   });
-  const aeroL = S.layers.find(l => l.key === 'aeroway');
-  if (aeroL?.on) { const d = waysToStroke(aeroWays); if (d) g += `<path d="${d}" fill="none" stroke="${aeroL.color}" stroke-width="${(aeroL.width*sc).toFixed(2)}" stroke-linecap="round"/>`; }
-  const railL = S.layers.find(l => l.key === 'railway');
-  if (railL?.on) { const d = waysToStroke(railWays); if (d) g += `<path d="${d}" fill="none" stroke="${railL.color}" stroke-width="${(railL.width*sc).toFixed(2)}" stroke-linecap="round" stroke-dasharray="${railL.dash||'5,4'}"/>`; }
-  const wwL = S.layers.find(l => l.key === 'waterway');
-  if (wwL?.on) { const d = waysToStroke(waterwayLines); if (d) g += `<path d="${d}" fill="none" stroke="${wwL.color}" stroke-width="${(wwL.width*sc).toFixed(2)}" stroke-linecap="round"/>`; }
-  const pierL = S.layers.find(l => l.key === 'pier');
-  if (pierL?.on) { const d = waysToStroke(pierLines); if (d) g += `<path d="${d}" fill="none" stroke="${pierL.color}" stroke-width="${(pierL.width*sc).toFixed(2)}" stroke-linecap="round"/>`; }
+  const aeroL=S.layers.find(l=>l.key==='aeroway');
+  if(aeroL?.on){const d=waysToStroke(aeroWays);if(d)g+=`<path d="${d}" fill="none" stroke="${aeroL.color}" stroke-width="${(aeroL.width*sc).toFixed(2)}" stroke-linecap="round"/>`;}
+  const railL=S.layers.find(l=>l.key==='railway');
+  if(railL?.on){const d=waysToStroke(railWays);if(d)g+=`<path d="${d}" fill="none" stroke="${railL.color}" stroke-width="${(railL.width*sc).toFixed(2)}" stroke-linecap="round" stroke-dasharray="${railL.dash||'5,4'}"/>`;}
+  const wwL=S.layers.find(l=>l.key==='waterway');
+  if(wwL?.on){const d=waysToStroke(waterwayLines);if(d)g+=`<path d="${d}" fill="none" stroke="${wwL.color}" stroke-width="${(wwL.width*sc).toFixed(2)}" stroke-linecap="round"/>`;}
+  const pierL=S.layers.find(l=>l.key==='pier');
+  if(pierL?.on){const d=waysToStroke(pierLines);if(d)g+=`<path d="${d}" fill="none" stroke="${pierL.color}" stroke-width="${(pierL.width*sc).toFixed(2)}" stroke-linecap="round"/>`;}
   return g;
 }
 
-function restyle() {
-  if (!cache) return;
-  sizeMapSVG();
-  const content = buildSVGContent();
-  svgEl().innerHTML  = `<rect width="${BASE}" height="${BASE}" fill="${S.bgColor}"/>` + content;
-  window._lastContent = content;
-  const mz = minZoom();
-  if (zoom <= mz + 0.001) setMode(viewMode, false);
-  else applyTransform(false);
+function restyle(){
+  if(!cache)return;
+  const content=buildSVGContent();
+  svgEl().innerHTML=`<rect width="${BASE}" height="${BASE}" fill="${S.bgColor}"/>`+content;
+  window._lastContent=content;
+  // Preserve the user's current zoom and pan — only re-clamp to stay in bounds
+  applyTransform(false);
 }
 
-function resolveWays(els, nm) {
-  return els
-    .filter(e => e.type === 'way')
-    .map(w => ({ ...w, rn: (w.nodes||[]).map(id => nm[id]).filter(Boolean) }))
-    .filter(w => w.rn.length >= 2);
+function resolveWays(els,nm){return els.filter(e=>e.type==='way').map(w=>({...w,rn:(w.nodes||[]).map(id=>nm[id]).filter(Boolean)})).filter(w=>w.rn.length>=2);}
+
+// ── Clear ─────────────────────────────────────────────────────────
+function clearMapState(){
+  cache=null;_b=null;
+  svgEl().innerHTML='';
+  hideCanvasError();hideOverlay();
+  zoom=1;panX=0;panY=0;
+  document.getElementById('pan-layer').style.transform='';
+  document.getElementById('export-btn').disabled=true;
+  document.getElementById('copy-btn').disabled=true;
 }
 
-// ── Clear map state ──────────────────────────────────────────────
-function clearMapState() {
-  cache = null; _b = null;
-  svgEl().innerHTML = '';
-  hideCanvasError(); hideOverlay();
-  zoom = 1; panX = 0; panY = 0;
-  document.getElementById('pan-layer').style.transform = '';
-  document.getElementById('export-btn').disabled = true;
-  document.getElementById('copy-btn').disabled   = true;
-}
-
-// ── Fetch and render ─────────────────────────────────────────────
-async function fetchAndRender() {
+// ── Fetch ─────────────────────────────────────────────────────────
+async function fetchAndRender(){
   hideCanvasError();
-  document.getElementById('export-btn').disabled = true;
-  document.getElementById('copy-btn').disabled   = true;
-  setOverlay('Fetching map data…', S.city);
+  document.getElementById('export-btn').disabled=true;
+  document.getElementById('copy-btn').disabled=true;
+  setOverlay('Fetching map data…',S.city);
 
-  try {
-    const { lat, lon, radius } = S;
-    const bbox   = radiusToBbox(lat, lon, radius);
-    const bb     = `${bbox.south.toFixed(6)},${bbox.west.toFixed(6)},${bbox.north.toFixed(6)},${bbox.east.toFixed(6)}`;
-    const hwVals = S.layers.filter(l => l.group === 'roads').flatMap(l => l.osm || []).join('|');
-    const query  = `[out:json][timeout:30];
+  try{
+    const{lat,lon,radius}=S;
+    const bbox=radiusToBbox(lat,lon,radius);
+    const bb=`${bbox.south.toFixed(6)},${bbox.west.toFixed(6)},${bbox.north.toFixed(6)},${bbox.east.toFixed(6)}`;
+    const hwVals=S.layers.filter(l=>l.group==='roads').flatMap(l=>l.osm||[]).join('|');
+    const query=`[out:json][timeout:30];
 (
   way["highway"~"^(${hwVals})$"](${bb});
   way["railway"~"^(rail|subway|light_rail|tram|monorail)$"](${bb});
@@ -1381,384 +930,329 @@ async function fetchAndRender() {
 );
 out body;>;out skel qt;`;
 
-    const data    = await queryOverpass(query);
-    const nodeMap = {};
-    data.elements.filter(e => e.type === 'node').forEach(n => { nodeMap[n.id] = { lat:n.lat, lon:n.lon }; });
-    const wni = {};
-    data.elements.filter(e => e.type === 'way').forEach(w => { wni[w.id] = w.nodes || []; });
-    const allWays = resolveWays(data.elements, nodeMap);
+    const data=await queryOverpass(query);
+    const nodeMap={};data.elements.filter(e=>e.type==='node').forEach(n=>{nodeMap[n.id]={lat:n.lat,lon:n.lon};});
+    const wni={};data.elements.filter(e=>e.type==='way').forEach(w=>{wni[w.id]=w.nodes||[];});
+    const allWays=resolveWays(data.elements,nodeMap);
     makeBounds(bbox);
 
-    const waterRels = data.elements.filter(e =>
-      e.type === 'relation' && (e.tags?.natural === 'water' || e.tags?.waterway === 'riverbank')
-    );
-    const waterRelPaths = [];
-    for (const rel of waterRels) {
-      const outerIds = (rel.members||[])
-        .filter(m => m.type === 'way' && (m.role === '' || m.role === 'outer'))
-        .map(m => m.ref);
-      if (!outerIds.length || outerIds.length > 80) continue;
-      const st   = stitchWays(outerIds, wni);
-      if (st.length < 3) continue;
-      const pStr = nodeIdsToFill(st, nodeMap);
-      if (pStr) waterRelPaths.push(pStr);
+    const waterRels=data.elements.filter(e=>e.type==='relation'&&(e.tags?.natural==='water'||e.tags?.waterway==='riverbank'));
+    const waterRelPaths=[];
+    for(const rel of waterRels){
+      const outerIds=(rel.members||[]).filter(m=>m.type==='way'&&(m.role===''||m.role==='outer')).map(m=>m.ref);
+      if(!outerIds.length||outerIds.length>80)continue;
+      const st=stitchWays(outerIds,wni);if(st.length<3)continue;
+      const pStr=nodeIdsToFill(st,nodeMap);if(pStr)waterRelPaths.push(pStr);
     }
 
-    cache = {
-      nodeMap,
-      roadWays:      allWays.filter(w => w.tags?.highway),
-      railWays:      allWays.filter(w => w.tags?.railway),
-      aeroWays:      allWays.filter(w => w.tags?.aeroway),
-      waterWayPolys: allWays.filter(w => w.tags?.natural === 'water'),
-      waterRelPaths,
-      waterwayLines: allWays.filter(w => w.tags?.waterway),
-      greenPolys:    allWays.filter(w => w.tags?.leisure || w.tags?.landuse),
-      pierLines:     allWays.filter(w => w.tags?.man_made && ['pier','breakwater','groyne'].includes(w.tags.man_made)),
-      buildingPolys: allWays.filter(w => w.tags?.building),
-    };
+    cache={nodeMap,
+      roadWays:allWays.filter(w=>w.tags?.highway),railWays:allWays.filter(w=>w.tags?.railway),aeroWays:allWays.filter(w=>w.tags?.aeroway),
+      waterWayPolys:allWays.filter(w=>w.tags?.natural==='water'),waterRelPaths,
+      waterwayLines:allWays.filter(w=>w.tags?.waterway),greenPolys:allWays.filter(w=>w.tags?.leisure||w.tags?.landuse),
+      pierLines:allWays.filter(w=>w.tags?.man_made&&['pier','breakwater','groyne'].includes(w.tags.man_made)),
+      buildingPolys:allWays.filter(w=>w.tags?.building)};
 
     sizeMapSVG();
+    
+    const r = canvasRect();
+    const s = svgEl().offsetWidth;
+    console.log('Canvas:', r.width, '×', r.height);
+    console.log('SVG side:', s);
+    console.log('fitZoom should be:', r.height / s);
+    console.log('fillZoom should be:', r.width / s);
+    console.log('current zoom:', zoom);
+    
     restyle();
+    // Default to fill on load
+    viewMode='fill';
     setMode('fill', false);
+    
+    console.log('zoom after setMode fill:', zoom);
+    
     hideOverlay();
-    if (typeof snapToMid === 'function') snapToMid();
-    document.getElementById('export-btn').disabled = false;
-    document.getElementById('copy-btn').disabled   = false;
+    if(typeof snapToMid === 'function') snapToMid();
+    document.getElementById('export-btn').disabled=false;
+    document.getElementById('copy-btn').disabled=false;
 
-  } catch(e) {
-    hideOverlay();
-    cache = null;
-    showCanvasError(e.message);
-  }
+  }catch(e){hideOverlay();cache=null;showCanvasError(e.message);console.error(e);}
 }
 
-document.getElementById('retry-btn').addEventListener('click', () => { hideCanvasError(); fetchAndRender(); });
+document.getElementById('retry-btn').addEventListener('click',()=>{hideCanvasError();fetchAndRender();});
 
-// ── Geocoding ────────────────────────────────────────────────────
-async function geocode(q) {
-  const r = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
-    { headers: { 'Accept-Language':'en', 'User-Agent':'MeridianApp/14.0' } }
-  );
-  const d = await r.json();
-  return d[0] || null;
+async function geocode(q){
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,{headers:{'Accept-Language':'en','User-Agent':'MeridianApp/14.0'}});
+  const d=await r.json();return d[0]||null;
 }
 
-// ── Welcome / generate flow ──────────────────────────────────────
-const generateBtn = document.getElementById('generate-btn');
-const welcomeErr  = document.getElementById('welcome-error');
-function resetGenerateBtn() {
-  generateBtn.disabled = false;
-  generateBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Generate map`;
-}
+// ── Welcome ───────────────────────────────────────────────────────
+const generateBtn=document.getElementById('generate-btn');
+const welcomeErr=document.getElementById('welcome-error');
+function resetGenerateBtn(){generateBtn.disabled=false;generateBtn.innerHTML=`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Generate map`;}
 
-async function generate() {
-  const query = document.getElementById('city-input').value.trim();
-  if (!query) return;
-  document.activeElement?.blur();
-  generateBtn.disabled  = true;
-  generateBtn.innerHTML = `<div style="width:13px;height:13px;border:1.5px solid rgba(26,20,0,0.25);border-top-color:#1a1400;border-radius:50%;animation:spin .8s linear infinite"></div>Searching…`;
+async function generate(){
+  const query=document.getElementById('city-input').value.trim();if(!query)return;
+  document.activeElement?.blur(); // dismiss mobile keyboard
+  generateBtn.disabled=true;
+  generateBtn.innerHTML=`<div style="width:13px;height:13px;border:1.5px solid rgba(26,20,0,0.25);border-top-color:#1a1400;border-radius:50%;animation:spin .8s linear infinite"></div>Searching…`;
   welcomeErr.classList.remove('show');
-  try {
-    const place = await geocode(query);
-    if (!place) {
-      welcomeErr.textContent = 'Place not found — try adding a state or country.';
-      welcomeErr.classList.add('show');
-      resetGenerateBtn();
-      return;
-    }
-    if (usingCustom) {
-      const v = parseInt(document.getElementById('custom-radius').value);
-      if (v > 0) { S.radius = v; S.strokeScale = 1.0; }
-    }
-    S.lat  = parseFloat(place.lat);
-    S.lon  = parseFloat(place.lon);
-    S.city = place.display_name.split(',').slice(0, 2).join(',').trim();
+  try{
+    const place=await geocode(query);
+    if(!place){welcomeErr.textContent='Place not found — try adding a state or country.';welcomeErr.classList.add('show');resetGenerateBtn();return;}
+    if(usingCustom){const v=parseInt(document.getElementById('custom-radius').value);if(v>0){S.radius=v;S.strokeScale=1.0;}}
+    S.lat=parseFloat(place.lat);S.lon=parseFloat(place.lon);
+    S.city=place.display_name.split(',').slice(0,2).join(',').trim();
     clearMapState();
-    S.layers  = BASE_LAYERS.map(l => ({ ...l }));
-    S.bgColor = '#0c0c0d';
-    activePreset = 0;
+    S.layers=BASE_LAYERS.map(l=>({...l}));
+    S.bgColor='#0c0c0d';
+    activePreset=0;
     document.getElementById('welcome').classList.add('out');
     document.getElementById('app').classList.add('visible');
-    ca.style.background = S.bgColor;
-    const locEl = document.getElementById('sidebar-loc');
-    locEl.textContent = S.city;
-    locEl.title       = place.display_name;
-    buildAllLayers();
-    buildPresets();
-    setTimeout(fetchAndRender, 450);
-  } catch(e) {
-    welcomeErr.textContent = 'Connection error — check your internet.';
-    welcomeErr.classList.add('show');
-    resetGenerateBtn();
-  }
+    ca.style.background=S.bgColor;
+    const locEl=document.getElementById('sidebar-loc');locEl.textContent=S.city;locEl.title=place.display_name;
+    buildAllLayers();buildPresets();
+    setTimeout(fetchAndRender,450);
+  }catch(e){welcomeErr.textContent='Connection error — check your internet.';welcomeErr.classList.add('show');resetGenerateBtn();}
 }
 
-generateBtn.addEventListener('click', generate);
-document.getElementById('city-input').addEventListener('keydown', e => { if (e.key === 'Enter') generate(); });
+generateBtn.addEventListener('click',generate);
+document.getElementById('city-input').addEventListener('keydown',e=>{if(e.key==='Enter')generate();});
 
-document.getElementById('new-btn').addEventListener('click', () => {
+document.getElementById('new-btn').addEventListener('click',()=>{
   clearMapState();
-  S.layers  = BASE_LAYERS.map(l => ({ ...l }));
-  S.bgColor = '#0c0c0d';
-  ca.style.background = '#0c0c0d';
+  S.layers=BASE_LAYERS.map(l=>({...l}));
+  S.bgColor='#0c0c0d';
+  ca.style.background='#0c0c0d';
   document.getElementById('welcome').classList.remove('out');
   document.getElementById('app').classList.remove('visible');
-  document.getElementById('city-input').value = '';
+  document.getElementById('city-input').value='';
   welcomeErr.classList.remove('show');
   resetGenerateBtn();
-  document.querySelectorAll('.radius-pill').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.radius-pill').forEach(b=>b.classList.remove('active'));
   document.querySelector('[data-r="4000"]').classList.add('active');
-  S.radius = 4000; S.strokeScale = 1.6;
+  S.radius=4000;S.strokeScale=1.6;
 });
 
-window.addEventListener('resize', () => {
-  if (!cache) return;
+window.addEventListener('resize',()=>{
+  if(!cache)return;
   sizeMapSVG();
-  setMode(viewMode, false);
+  setMode(viewMode,false);
 });
 
-// ── Export ───────────────────────────────────────────────────────
-document.getElementById('export-btn').addEventListener('click', () => {
-  document.getElementById('export-modal').classList.add('open');
-});
-document.getElementById('export-cancel').addEventListener('click', () => {
+// ── Export ────────────────────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click',()=>document.getElementById('export-modal').classList.add('open'));
+document.getElementById('export-cancel').addEventListener('click',()=>document.getElementById('export-modal').classList.remove('open'));
+document.querySelectorAll('.format-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.format-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');exportFormat=btn.dataset.fmt;});});
+['exp-w','exp-h'].forEach(id=>{document.getElementById(id).addEventListener('input',()=>{const w=parseInt(document.getElementById('exp-w').value)||0,h=parseInt(document.getElementById('exp-h').value)||0;document.getElementById('exp-warning').classList.toggle('show',w>6000||h>6000);});});
+
+document.getElementById('export-confirm').addEventListener('click',()=>{
+  if(!cache)return;
+  const expW=parseInt(document.getElementById('exp-w').value)||4000;
+  const expH=parseInt(document.getElementById('exp-h').value)||4000;
+  const city=S.city.replace(/[^a-z0-9]/gi,'_').toLowerCase()||'map';
   document.getElementById('export-modal').classList.remove('open');
-});
-document.querySelectorAll('.format-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    exportFormat = btn.dataset.fmt;
-  });
-});
-['exp-w','exp-h'].forEach(id => {
-  document.getElementById(id).addEventListener('input', () => {
-    const w = parseInt(document.getElementById('exp-w').value) || 0;
-    const h = parseInt(document.getElementById('exp-h').value) || 0;
-    document.getElementById('exp-warning').classList.toggle('show', w > 6000 || h > 6000);
-  });
+  const content=buildSVGContent();
+  const svgStr=`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BASE} ${BASE}" width="${expW}" height="${expH}">\n<rect width="${BASE}" height="${BASE}" fill="${S.bgColor}"/>\n${content}\n</svg>`;
+  if(exportFormat==='svg'){const a=document.createElement('a');a.href='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgStr);a.download=`meridian_${city}.svg`;a.click();return;}
+  const canvas=document.createElement('canvas');canvas.width=expW;canvas.height=expH;
+  const ctx=canvas.getContext('2d');
+  const blob=new Blob([svgStr],{type:'image/svg+xml'});const url=URL.createObjectURL(blob);
+  const img=new Image();
+  img.onload=()=>{ctx.drawImage(img,0,0,expW,expH);URL.revokeObjectURL(url);canvas.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`meridian_${city}.png`;a.click();},'image/png');};
+  img.onerror=()=>{URL.revokeObjectURL(url);toast('PNG export failed — try SVG instead',true);};
+  img.src=url;
 });
 
-document.getElementById('export-confirm').addEventListener('click', () => {
-  if (!cache) return;
-  const expW    = parseInt(document.getElementById('exp-w').value) || 4000;
-  const expH    = parseInt(document.getElementById('exp-h').value) || 4000;
-  const city    = S.city.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'map';
-  const content = buildSVGContent();
-  const svgStr  = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BASE} ${BASE}" width="${expW}" height="${expH}">\n<rect width="${BASE}" height="${BASE}" fill="${S.bgColor}"/>\n${content}\n</svg>`;
-  document.getElementById('export-modal').classList.remove('open');
-  if (exportFormat === 'svg') {
-    const a    = document.createElement('a');
-    a.href     = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
-    a.download = `meridian_${city}.svg`;
-    a.click();
-    return;
-  }
-  const canvas = document.createElement('canvas');
-  canvas.width = expW; canvas.height = expH;
-  const ctx  = canvas.getContext('2d');
-  const blob = new Blob([svgStr], { type:'image/svg+xml' });
-  const url  = URL.createObjectURL(blob);
-  const img  = new Image();
-  img.onload = () => {
-    ctx.drawImage(img, 0, 0, expW, expH);
-    URL.revokeObjectURL(url);
-    canvas.toBlob(b => {
-      const a    = document.createElement('a');
-      a.href     = URL.createObjectURL(b);
-      a.download = `meridian_${city}.png`;
-      a.click();
-    }, 'image/png');
-  };
-  img.onerror = () => { URL.revokeObjectURL(url); toast('PNG export failed — try SVG instead', true); };
-  img.src = url;
+document.getElementById('copy-btn').addEventListener('click',()=>{
+  if(!cache)return;
+  const content=buildSVGContent();
+  const svgStr=`<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BASE} ${BASE}"><rect width="${BASE}" height="${BASE}" fill="${S.bgColor}"/>${content}</svg>`;
+  navigator.clipboard.writeText(svgStr).then(()=>toast('SVG copied to clipboard')).catch(()=>toast('Copy failed — try Export instead',true));
 });
-
-document.getElementById('copy-btn').addEventListener('click', () => {
-  if (!cache) return;
-  const content = buildSVGContent();
-  const svgStr  = `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BASE} ${BASE}"><rect width="${BASE}" height="${BASE}" fill="${S.bgColor}"/>${content}</svg>`;
-  navigator.clipboard.writeText(svgStr)
-    .then(()  => toast('SVG copied to clipboard'))
-    .catch(() => toast('Copy failed — try Export instead', true));
+    
+// Mirror scroll-area buttons on mobile
+document.getElementById('copy-btn-scroll')?.addEventListener('click',()=>{
+  document.getElementById('copy-btn').click();
 });
+document.getElementById('export-btn-scroll')?.addEventListener('click',()=>{
+  document.getElementById('export-btn').click();
+});
+// Keep disabled state in sync
+const _expBtn=document.getElementById('export-btn');
+const _copyBtn=document.getElementById('copy-btn');
+const _expScroll=document.getElementById('export-btn-scroll');
+const _copyScroll=document.getElementById('copy-btn-scroll');
+new MutationObserver(()=>{
+  if(_expScroll) _expScroll.disabled=_expBtn.disabled;
+  if(_copyScroll) _copyScroll.disabled=_copyBtn.disabled;
+}).observe(_expBtn,{attributes:true,attributeFilter:['disabled']});
+new MutationObserver(()=>{
+  if(_copyScroll) _copyScroll.disabled=_copyBtn.disabled;
+}).observe(_copyBtn,{attributes:true,attributeFilter:['disabled']});
 
-// Mirror mobile scroll-area buttons to their desktop counterparts
-document.getElementById('copy-btn-scroll')?.addEventListener('click',   () => { document.getElementById('copy-btn').click(); });
-document.getElementById('export-btn-scroll')?.addEventListener('click', () => { document.getElementById('export-btn').click(); });
+// ── Mobile bottom sheet (height-resize approach) ──────────────
+function isMobile(){ return window.innerWidth <= 640; }
 
-// Keep mobile button disabled state in sync
-const _expBtn     = document.getElementById('export-btn');
-const _copyBtn    = document.getElementById('copy-btn');
-const _expScroll  = document.getElementById('export-btn-scroll');
-const _copyScroll = document.getElementById('copy-btn-scroll');
-new MutationObserver(() => {
-  if (_expScroll)  _expScroll.disabled  = _expBtn.disabled;
-  if (_copyScroll) _copyScroll.disabled = _copyBtn.disabled;
-}).observe(_expBtn,  { attributes:true, attributeFilter:['disabled'] });
-new MutationObserver(() => {
-  if (_copyScroll) _copyScroll.disabled = _copyBtn.disabled;
-}).observe(_copyBtn, { attributes:true, attributeFilter:['disabled'] });
+(function initSheet(){
+  const sheet  = document.getElementById('sidebar');
+  const handle = document.getElementById('sheet-handle');
+  const sTop   = document.querySelector('.sidebar-top');
+  const scrollArea = document.querySelector('.sidebar-scroll');
+  const sidebarBottom = document.querySelector('.sidebar-bottom');
+  const scrollActions = document.querySelector('.mobile-scroll-actions');
+  if(!sheet||!handle) return;
 
-// ── Mobile bottom sheet ──────────────────────────────────────────
-function isMobile() { return window.innerWidth <= 640; }
+  // Three states: 'full' | 'mid' | 'collapsed'
+  let sheetState = 'mid';
 
-(function initSheet() {
-  const sheet          = document.getElementById('sidebar');
-  const handle         = document.getElementById('sheet-handle');
-  const sTop           = document.querySelector('.sidebar-top');
-  const scrollArea     = document.querySelector('.sidebar-scroll');
-  const sidebarBottom  = document.querySelector('.sidebar-bottom');
-  const scrollActions  = document.querySelector('.mobile-scroll-actions');
-  if (!sheet || !handle) return;
+  function vh(){ return window.innerHeight; }
 
-  let sheetState = 'collapsed';
-
-  function vh()         { return window.innerHeight; }
+  // Heights for each state
   function fullH()      { return Math.round(0.88 * vh()); }
   function midH()       { return Math.round(0.46 * vh()); }
   function collapsedH() {
+    // Just the handle + sidebar-top height
     const topH = sTop ? sTop.offsetHeight : 56;
     return (handle ? handle.offsetHeight : 20) + topH;
   }
-  function stateH(state) {
-    if (state === 'full')      return fullH();
-    if (state === 'mid')       return midH();
-    if (state === 'collapsed') return collapsedH();
+
+  function stateH(state){
+    if(state==='full')      return fullH();
+    if(state==='mid')       return midH();
+    if(state==='collapsed') return collapsedH();
     return midH();
   }
 
-  // Export button visibility per state:
-  //   full      → sidebar-bottom floats at bottom, mobile-scroll-actions hidden
-  //   mid       → mobile-scroll-actions inline, sidebar-bottom hidden
-  //   collapsed → both hidden
-  function updateExportButtons(state) {
-    if (!sidebarBottom || !scrollActions) return;
-    if (state === 'full') {
+  // Toggle export button visibility via class only — no display toggling
+  function updateExportButtons(state){
+    if(!sidebarBottom||!scrollActions) return;
+    if(state==='full'){
       sidebarBottom.classList.remove('sheet-hidden');
       scrollActions.classList.add('sheet-hidden');
-    } else if (state === 'mid') {
+    } else if(state==='mid'){
       sidebarBottom.classList.add('sheet-hidden');
       scrollActions.classList.remove('sheet-hidden');
     } else {
+      // collapsed — hide both
       sidebarBottom.classList.add('sheet-hidden');
       scrollActions.classList.add('sheet-hidden');
     }
   }
 
-  function updateCollapsedUI(state) {
+  function updateCollapsedUI(state){
     const presetsBar = document.querySelector('.presets-bar');
-    if (state === 'collapsed') {
-      scrollArea?.classList.add('sheet-hidden');
-      presetsBar?.classList.add('sheet-hidden');
+    if(state==='collapsed'){
+      if(scrollArea)  scrollArea.classList.add('sheet-hidden');
+      if(presetsBar)  presetsBar.classList.add('sheet-hidden');
     } else {
-      scrollArea?.classList.remove('sheet-hidden');
-      presetsBar?.classList.remove('sheet-hidden');
+      if(scrollArea)  scrollArea.classList.remove('sheet-hidden');
+      if(presetsBar)  presetsBar.classList.remove('sheet-hidden');
     }
   }
 
-  function updateToast(heightPx) {
-    document.documentElement.style.setProperty('--sheet-h', heightPx + 'px');
+  function updateToast(heightPx){
+    document.documentElement.style.setProperty('--sheet-h', heightPx+'px');
   }
 
-  function snapTo(state, animated = true) {
+  function snapTo(state, animated=true){
     sheetState = state;
-    const h    = stateH(state);
+    const h = stateH(state);
     sheet.style.transition = animated ? 'height .3s cubic-bezier(.25,.46,.45,.94)' : 'none';
-    sheet.style.height     = h + 'px';
-    sheet.style.transform  = '';
+    sheet.style.height = h + 'px';
+    sheet.style.transform = '';
     updateToast(h);
     updateExportButtons(state);
     updateCollapsedUI(state);
     const zc = document.getElementById('zoom-controls');
-    if (zc) {
-      const isFull       = state === 'full';
-      zc.style.transition    = 'opacity .25s';
-      zc.style.opacity       = isFull ? '0' : '1';
+    if(zc){
+      const isFull = state==='full';
+      zc.style.transition='opacity .25s';
+      zc.style.opacity = isFull ? '0' : '1';
       zc.style.pointerEvents = isFull ? 'none' : 'auto';
     }
   }
 
-  // Drag to resize
-  let isDragging = false, dragStartY = 0, dragStartH = 0, lastY = 0, lastT = 0, velocity = 0;
+  // Drag to resize — track finger from handle or sidebar-top
+  let isDragging=false, dragStartY=0, dragStartH=0, lastY=0, lastT=0, velocity=0;
 
-  function startDrag(clientY) {
-    isDragging = true;
-    dragStartY = clientY;
-    dragStartH = sheet.offsetHeight;
-    lastY = clientY; lastT = Date.now(); velocity = 0;
-    sheet.style.transition = 'none';
+  function startDrag(clientY){
+    isDragging=true;
+    dragStartY=clientY;
+    dragStartH=sheet.offsetHeight;
+    lastY=clientY; lastT=Date.now(); velocity=0;
+    sheet.style.transition='none';
   }
-  function onDragMove(e) {
-    if (!isDragging) return;
-    const y   = e.touches[0].clientY;
+
+  function onDragMove(e){
+    if(!isDragging) return;
+    const y = e.touches[0].clientY;
     const now = Date.now();
-    velocity  = (lastY - y) / (now - lastT || 1);
-    lastY = y; lastT = now;
-    const newH = Math.max(collapsedH(), Math.min(fullH(), dragStartH + (dragStartY - y)));
+    velocity = (lastY - y) / (now - lastT || 1);
+    lastY=y; lastT=now;
+    const delta = dragStartY - y;
+    const newH = Math.max(collapsedH(), Math.min(fullH(), dragStartH + delta));
     sheet.style.height = newH + 'px';
     updateToast(newH);
     e.preventDefault();
   }
-  function onDragEnd() {
-    if (!isDragging) return;
-    isDragging   = false;
-    const h      = sheet.offsetHeight;
-    const mid    = midH(), full = fullH(), col = collapsedH();
+
+  function onDragEnd(){
+    if(!isDragging) return;
+    isDragging=false;
+    const h = sheet.offsetHeight;
+    const mid = midH(), full = fullH(), col = collapsedH();
     let target;
-    if      (velocity >  0.4) target = h > (mid + full) / 2 ? 'full' : 'mid';
-    else if (velocity < -0.4) target = h < (col + mid)  / 2 ? 'collapsed' : 'mid';
+    if(velocity > 0.4)       target = h > (mid+full)/2 ? 'full' : 'mid';
+    else if(velocity < -0.4) target = h < (col+mid)/2  ? 'collapsed' : 'mid';
     else {
-      const dF = Math.abs(h - full), dM = Math.abs(h - mid), dC = Math.abs(h - col);
+      const dF=Math.abs(h-full), dM=Math.abs(h-mid), dC=Math.abs(h-col);
       target = ['full','mid','collapsed'][[dF,dM,dC].indexOf(Math.min(dF,dM,dC))];
     }
     snapTo(target);
   }
 
-  handle.addEventListener('touchstart', e => { if (!isMobile()) return; startDrag(e.touches[0].clientY); }, { passive:true });
-  sTop?.addEventListener('touchstart',  e => { if (!isMobile()) return; startDrag(e.touches[0].clientY); }, { passive:true });
-  handle.addEventListener('touchmove', onDragMove, { passive:false });
-  sTop?.addEventListener('touchmove',  onDragMove, { passive:false });
+  handle.addEventListener('touchstart', e=>{ if(!isMobile())return; startDrag(e.touches[0].clientY); },{passive:true});
+  sTop?.addEventListener('touchstart',  e=>{ if(!isMobile())return; startDrag(e.touches[0].clientY); },{passive:true});
+  handle.addEventListener('touchmove', onDragMove, {passive:false});
+  sTop?.addEventListener('touchmove',  onDragMove, {passive:false});
   window.addEventListener('touchend',  onDragEnd);
 
-  // Tap handle to cycle: collapsed → mid → full → mid
-  handle.addEventListener('click', () => {
-    if (!isMobile()) return;
-    if      (sheetState === 'collapsed') snapTo('mid');
-    else if (sheetState === 'mid')       snapTo('full');
-    else                                 snapTo('mid');
+  // Tap handle to cycle collapsed→mid→full→mid→collapsed
+  handle.addEventListener('click',()=>{
+    if(!isMobile()) return;
+    if(sheetState==='collapsed') snapTo('mid');
+    else if(sheetState==='mid')  snapTo('full');
+    else                          snapTo('mid');
   });
 
-  function initPosition(toState = 'collapsed') {
-    if (!isMobile()) {
-      sheet.style.height    = '';
-      sheet.style.transform = '';
-      const presetsBar = document.querySelector('.presets-bar');
-      sidebarBottom?.classList.remove('sheet-hidden');
-      scrollActions?.classList.add('sheet-hidden');
-      scrollArea?.classList.remove('sheet-hidden');
-      presetsBar?.classList.remove('sheet-hidden');
-      const zc = document.getElementById('zoom-controls');
-      if (zc) { zc.style.opacity = '1'; zc.style.pointerEvents = 'auto'; }
+  function initPosition(toState='mid'){
+    if(!isMobile()){
+      sheet.style.height='';
+      sheet.style.transform='';
+      // Restore desktop — remove all mobile classes
+      const presetsBar=document.querySelector('.presets-bar');
+      if(sidebarBottom) sidebarBottom.classList.remove('sheet-hidden');
+      if(scrollActions) scrollActions.classList.add('sheet-hidden');
+      if(scrollArea)    scrollArea.classList.remove('sheet-hidden');
+      if(presetsBar)    presetsBar.classList.remove('sheet-hidden');
+      const zc=document.getElementById('zoom-controls');
+      if(zc){zc.style.opacity='1';zc.style.pointerEvents='auto';}
       return;
     }
     snapTo(toState, false);
   }
 
-  // Start collapsed — expands to mid only after a successful map load
+  // Start collapsed immediately (no animation) — wait for map load
   initPosition('collapsed');
 
-  // Called by fetchAndRender on success only
-  window.snapToMid = () => { if (isMobile()) setTimeout(() => snapTo('mid'), 200); };
+  // Expose for fetchAndRender to call on successful load only
+  window.snapToMid = ()=>{ if(isMobile()) setTimeout(()=>snapTo('mid'), 200); };
 
-  document.getElementById('new-btn').addEventListener('click', () => {
-    if (isMobile()) setTimeout(() => snapTo('collapsed'), 500);
+  document.getElementById('new-btn').addEventListener('click',()=>{
+    if(isMobile()) setTimeout(()=>snapTo('collapsed'),500);
   });
 
-  window.addEventListener('resize', () => { initPosition(sheetState); });
+  window.addEventListener('resize',()=>{ initPosition(sheetState); });
 })();
-
 </script>
 </body>
 </html>
