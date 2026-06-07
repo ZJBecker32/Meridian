@@ -419,7 +419,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
           <div class="radius-pill" data-r="2000" data-scale="2.0">2 km</div>
           <div class="radius-pill active" data-r="4000" data-scale="1.6">4 km</div>
           <div class="radius-pill" data-r="8000" data-scale="1.2">8 km</div>
-          <div class="radius-pill" data-r="15000" data-scale="1.0">15 km</div>
+          <div class="radius-pill" data-r="16000" data-scale="1.0">16 km</div>
         </div>
         <div class="radius-custom-wrap" id="custom-wrap">
           <div class="radius-custom-input-row">
@@ -1159,7 +1159,7 @@ function renderRecents(){
     const el=document.createElement('div');
     const short=r.city.split(',')[0].trim();
     el.className='recent-chip';el.textContent=short;el.title=r.city;
-    el.addEventListener('click',()=>launchFromState(r.lat,r.lon,r.city,r.radius));
+    el.addEventListener('click',()=>launchFromState(r.lat,r.lon,r.city,S.radius));
     chips.appendChild(el);
   });
   wrap.style.display='flex';
