@@ -190,6 +190,13 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 .modal-confirm{flex:2;background:var(--accent);border:none;border-radius:var(--radius);padding:10px;font-family:var(--sans);font-size:13px;font-weight:500;color:#1a1400;cursor:pointer;transition:opacity .15s;}
 .modal-confirm:hover{opacity:.88;}
 
+/* Recent searches */
+.recents-wrap{display:flex;flex-direction:column;gap:6px;}
+.recents-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+.recents-chips{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;}
+.recent-chip{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 4px;font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;user-select:none;}
+.recent-chip:hover{border-color:var(--accent);color:var(--accent);}
+
 /* Hide handle on desktop — must be BEFORE media query so mobile display:flex overrides */
 .sheet-handle{display:none;}
 .mobile-scroll-actions{display:none;}
@@ -399,6 +406,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="city-input" placeholder="City, neighborhood, or place…" autocomplete="off"/>
       </div>
+      <div class="recents-wrap" id="recents-wrap" style="display:none">
+        <span class="recents-label">Recent</span>
+        <div class="recents-chips" id="recents-chips"></div>
+      </div>
       <div class="radius-control">
         <div class="radius-label-row">
           <span class="radius-label">Radius</span>
@@ -524,6 +535,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
         <input class="modal-input" type="number" id="exp-h" value="4000" placeholder="Height"/>
       </div>
       <div class="modal-warning" id="exp-warning">Very large dimensions may take a moment to process.</div>
+      <div class="modal-warning" id="exp-ratio-warning">Non-square dimensions will stretch the map — the canvas is always 1:1.</div>
     </div>
     <div class="modal-field">
       <div class="modal-label">Format</div>
@@ -543,18 +555,18 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 const BASE = 1000;
 
 const PRESETS = [
-  { name:'Dark',    dot:'#2a2620', bg:'#0c0c0d',
+  { name:'Dark',     dot:'#2a2620', bg:'#0c0c0d',
     layers:{path:'#252420',residential:'#38352e',tertiary:'#524e44',secondary:'#6e6a5a',primary:'#a09070',motorway:'#c8a96e',railway:'#8a8070',aeroway:'#5a6070',building:'#1e1c18',pier:'#3a3428',green:'#161e14',water:'#162030',waterway:'#20304a'}},
-  { name:'Sepia',   dot:'#c8a878', bg:'#f0e8d8',
+  { name:'Sepia',    dot:'#c8a878', bg:'#f0e8d8',
     layers:{path:'#c8baa0',residential:'#b8a880',tertiary:'#9a8060',secondary:'#7a5c3c',primary:'#5a3c1c',motorway:'#3a2008',railway:'#886050',aeroway:'#6a7060',building:'#d8c8a0',pier:'#a89060',green:'#b8c890',water:'#8aabcc',waterway:'#6888aa'}},
-  { name:'Mono',    dot:'#888888', bg:'#ffffff',
+  { name:'Mono',     dot:'#888888', bg:'#ffffff',
     layers:{path:'#e0e0e0',residential:'#c8c8c8',tertiary:'#a8a8a8',secondary:'#888888',primary:'#505050',motorway:'#202020',railway:'#606060',aeroway:'#707070',building:'#e8e8e8',pier:'#909090',green:'#ececec',water:'#d0d8e0',waterway:'#b0bcc8'}},
-  { name:'Inverse', dot:'#c0c0c0', bg:'#080808',
-    layers:{path:'#303030',residential:'#404040',tertiary:'#545454',secondary:'#686868',primary:'#909090',motorway:'#e0e0e0',railway:'#909090',aeroway:'#686868',building:'#181818',pier:'#383838',green:'#101010',water:'#1e1e1e',waterway:'#2a2a2a'}},
-  { name:'Blueprint', dot:'#1e5090', bg:'#0d1b2a',
-    layers:{path:'#112240',residential:'#162e50',tertiary:'#1a3a60',secondary:'#204878',primary:'#3a7ab0',motorway:'#6ab0d8',railway:'#4a8ab8',aeroway:'#406080',building:'#1e3a5a',pier:'#2a4a6a',green:'#0a2030',water:'#0a1a30',waterway:'#183860'}},
-  { name:'Neon',    dot:'#00ffc8', bg:'#0a0012',
-    layers:{path:'#3a0060',residential:'#480078',tertiary:'#580090',secondary:'#6800b0',primary:'#00c8a0',motorway:'#00ffc8',railway:'#d000d0',aeroway:'#0088d0',building:'#180030',pier:'#200040',green:'#160024',water:'#08001a',waterway:'#1000a0'}},
+  { name:'Inverse',  dot:'#c0c0c0', bg:'#080808',
+    layers:{path:'#282828',residential:'#3a3a3a',tertiary:'#505050',secondary:'#6a6a6a',primary:'#8e8e8e',motorway:'#e0e0e0',railway:'#909090',aeroway:'#686868',building:'#181818',pier:'#383838',green:'#101010',water:'#1e1e1e',waterway:'#2a2a2a'}},
+  { name:'Blueprint',dot:'#1e5090', bg:'#0d1b2a',
+    layers:{path:'#112240',residential:'#162e50',tertiary:'#1a3a60',secondary:'#204878',primary:'#3a7ab0',motorway:'#80c8f0',railway:'#4a8ab8',aeroway:'#406080',building:'#122030',pier:'#2a4a6a',green:'#0a2030',water:'#0a1a30',waterway:'#183860'}},
+  { name:'Neon',     dot:'#00ffc8', bg:'#0a0012',
+    layers:{path:'#500070',residential:'#5a0088',tertiary:'#580090',secondary:'#6800b0',primary:'#00c8a0',motorway:'#00ffc8',railway:'#d000d0',aeroway:'#0088d0',building:'#180030',pier:'#200040',green:'#160024',water:'#08001a',waterway:'#1000a0'}},
 ];
 
 const BASE_LAYERS=[
@@ -885,7 +897,6 @@ function restyle(){
   if(!cache)return;
   const content=buildSVGContent();
   svgEl().innerHTML=`<rect width="${BASE}" height="${BASE}" fill="${S.bgColor}"/>`+content;
-  window._lastContent=content;
   // Preserve the user's current zoom and pan — only re-clamp to stay in bounds
   applyTransform(false);
 }
@@ -958,6 +969,7 @@ out body;>;out skel qt;`;
     setMode('fill', false);
     
     hideOverlay();
+    encodeHash();
     if(typeof snapToMid === 'function') snapToMid();
     document.getElementById('export-btn').disabled=false;
     document.getElementById('copy-btn').disabled=false;
@@ -989,6 +1001,7 @@ async function generate(){
     if(usingCustom){const v=parseInt(document.getElementById('custom-radius').value);if(v>0){S.radius=v;S.strokeScale=1.0;}}
     S.lat=parseFloat(place.lat);S.lon=parseFloat(place.lon);
     S.city=place.display_name.split(',').slice(0,2).join(',').trim();
+    saveRecent(S.city,S.lat,S.lon,S.radius);
     clearMapState();
     S.layers=BASE_LAYERS.map(l=>({...l}));
     S.bgColor='#0c0c0d';
@@ -1018,6 +1031,13 @@ document.getElementById('new-btn').addEventListener('click',()=>{
   document.querySelectorAll('.radius-pill').forEach(b=>b.classList.remove('active'));
   document.querySelector('[data-r="4000"]').classList.add('active');
   S.radius=4000;S.strokeScale=1.6;
+  usingCustom=false;
+  document.getElementById('radius-pills').style.display='flex';
+  document.getElementById('custom-wrap').classList.remove('show');
+  document.getElementById('custom-toggle').textContent='Custom';
+  document.getElementById('custom-warning').classList.remove('show');
+  history.replaceState(null,'',location.pathname+location.search);
+  renderRecents();
 });
 
 window.addEventListener('resize',()=>{
@@ -1030,7 +1050,7 @@ window.addEventListener('resize',()=>{
 document.getElementById('export-btn').addEventListener('click',()=>document.getElementById('export-modal').classList.add('open'));
 document.getElementById('export-cancel').addEventListener('click',()=>document.getElementById('export-modal').classList.remove('open'));
 document.querySelectorAll('.format-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.format-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');exportFormat=btn.dataset.fmt;});});
-['exp-w','exp-h'].forEach(id=>{document.getElementById(id).addEventListener('input',()=>{const w=parseInt(document.getElementById('exp-w').value)||0,h=parseInt(document.getElementById('exp-h').value)||0;document.getElementById('exp-warning').classList.toggle('show',w>6000||h>6000);});});
+['exp-w','exp-h'].forEach(id=>{document.getElementById(id).addEventListener('input',()=>{const w=parseInt(document.getElementById('exp-w').value)||0,h=parseInt(document.getElementById('exp-h').value)||0;document.getElementById('exp-warning').classList.toggle('show',w>6000||h>6000);document.getElementById('exp-ratio-warning').classList.toggle('show',w>0&&h>0&&w!==h);});});
 
 document.getElementById('export-confirm').addEventListener('click',()=>{
   if(!cache)return;
@@ -1076,6 +1096,92 @@ new MutationObserver(()=>{
 new MutationObserver(()=>{
   if(_copyScroll) _copyScroll.disabled=_copyBtn.disabled;
 }).observe(_copyBtn,{attributes:true,attributeFilter:['disabled']});
+
+// ── URL hash state ────────────────────────────────────────────────
+function encodeHash(){
+  if(!isFinite(S.lat)||!isFinite(S.lon)||!S.lat&&!S.lon) return;
+  const p=new URLSearchParams();
+  p.set('lat',S.lat.toFixed(6));p.set('lon',S.lon.toFixed(6));p.set('r',S.radius);
+  history.replaceState(null,'','#'+p.toString());
+}
+function decodeHash(){
+  const h=location.hash.slice(1);if(!h) return null;
+  try{
+    const p=new URLSearchParams(h);
+    const lat=parseFloat(p.get('lat')),lon=parseFloat(p.get('lon')),r=parseInt(p.get('r'));
+    if(!isFinite(lat)||!isFinite(lon)||!r) return null;
+    return{lat,lon,radius:r};
+  }catch{return null;}
+}
+
+// ── Recent searches ───────────────────────────────────────────────
+const RECENTS_KEY='meridian_recents';
+function loadRecents(){try{return JSON.parse(localStorage.getItem(RECENTS_KEY))||[];}catch{return[];}}
+function saveRecent(city,lat,lon,radius){
+  let arr=loadRecents().filter(r=>r.city!==city);
+  arr.unshift({city,lat,lon,radius});
+  if(arr.length>5) arr.length=5;
+  try{localStorage.setItem(RECENTS_KEY,JSON.stringify(arr));}catch{}
+}
+function launchFromState(lat,lon,city,radius,preset=0){
+  S.lat=lat;S.lon=lon;S.city=city||'';S.radius=radius;S.strokeScale=1.0;
+  document.querySelectorAll('.radius-pill').forEach(b=>{
+    const match=parseInt(b.dataset.r)===radius;
+    b.classList.toggle('active',match);
+    if(match) S.strokeScale=parseFloat(b.dataset.scale)||1.0;
+  });
+  clearMapState();
+  S.layers=BASE_LAYERS.map(l=>({...l}));S.bgColor='#0c0c0d';activePreset=preset;
+  document.getElementById('welcome').classList.add('out');
+  document.getElementById('app').classList.add('visible');
+  ca.style.background=S.bgColor;
+  const locEl=document.getElementById('sidebar-loc');
+  const placeholder=city||`${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
+  locEl.textContent=placeholder;locEl.title=placeholder;
+  if(!city){
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&lat=${lat}&lon=${lon}`,
+      {headers:{'Accept-Language':'en','User-Agent':'MeridianApp/14.0'}})
+      .then(r=>r.json())
+      .then(d=>{if(d?.display_name){S.city=d.display_name.split(',').slice(0,2).join(',').trim();locEl.textContent=S.city;locEl.title=d.display_name;}})
+      .catch(()=>{});
+  }
+  buildAllLayers();buildPresets();
+  if(preset!==0) applyPreset(preset);
+  setTimeout(fetchAndRender,450);
+}
+function renderRecents(){
+  const arr=loadRecents();
+  const wrap=document.getElementById('recents-wrap'),chips=document.getElementById('recents-chips');
+  if(!wrap||!chips) return;
+  if(!arr.length){wrap.style.display='none';return;}
+  chips.innerHTML='';
+  arr.slice(0,3).forEach(r=>{
+    const el=document.createElement('div');
+    const short=r.city.split(',')[0].trim();
+    el.className='recent-chip';el.textContent=short;el.title=r.city;
+    el.addEventListener('click',()=>launchFromState(r.lat,r.lon,r.city,r.radius));
+    chips.appendChild(el);
+  });
+  wrap.style.display='flex';
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  const modal=document.getElementById('export-modal');
+  if(e.key==='Escape'&&modal.classList.contains('open')){modal.classList.remove('open');return;}
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  if(!cache) return;
+  if(e.key==='+'||e.key==='='){zoom=Math.min(zoom*1.5,ZOOM_MAX);applyTransform(true);}
+  else if(e.key==='-'){zoom=Math.max(zoom/1.5,minZoom());applyTransform(true);}
+  else if(e.key==='f'||e.key==='F'){setMode(viewMode==='fit'?'fill':'fit');}
+});
+
+// ── Auto-load from URL hash or show recents ───────────────────────
+(function(){
+  const state=decodeHash();
+  if(state) launchFromState(state.lat,state.lon,'',state.radius);
+  else renderRecents();
+})();
 
 // ── Mobile bottom sheet (height-resize approach) ──────────────
 function isMobile(){ return window.innerWidth <= 640; }
