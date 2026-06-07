@@ -1001,7 +1001,7 @@ async function generate(){
     if(usingCustom){const v=parseInt(document.getElementById('custom-radius').value);if(v>0){S.radius=v;S.strokeScale=1.0;}}
     S.lat=parseFloat(place.lat);S.lon=parseFloat(place.lon);
     S.city=place.display_name.split(',').slice(0,2).join(',').trim();
-    saveRecent(S.city,S.lat,S.lon,S.radius);
+    saveRecent(S.city,S.lat,S.lon);
     clearMapState();
     S.layers=BASE_LAYERS.map(l=>({...l}));
     S.bgColor='#0c0c0d';
@@ -1117,9 +1117,9 @@ function decodeHash(){
 // ── Recent searches ───────────────────────────────────────────────
 const RECENTS_KEY='meridian_recents';
 function loadRecents(){try{return JSON.parse(localStorage.getItem(RECENTS_KEY))||[];}catch{return[];}}
-function saveRecent(city,lat,lon,radius){
+function saveRecent(city,lat,lon){
   let arr=loadRecents().filter(r=>r.city!==city);
-  arr.unshift({city,lat,lon,radius});
+  arr.unshift({city,lat,lon});
   if(arr.length>5) arr.length=5;
   try{localStorage.setItem(RECENTS_KEY,JSON.stringify(arr));}catch{}
 }
